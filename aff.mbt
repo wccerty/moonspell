@@ -11,6 +11,7 @@ pub(all) struct AffixRule {
   cross_product : Bool
   strip : String
   add : String
+  continuation : String
   condition : String
 }
 
@@ -75,19 +76,24 @@ fn parse_affix_rule(
   } else {
     "."
   }
+  let (add, continuation) = match tokens[3].split_once("/") {
+    Some((add, flags)) => (normalize_affix_text(add.to_owned()), flags.to_owned())
+    None => (normalize_affix_text(tokens[3]), "")
+  }
   Ok({
     kind,
     flag,
     cross_product,
     strip: normalize_affix_text(tokens[2]),
-    add: normalize_affix_text(tokens[3]),
+    add,
+    continuation,
     condition,
   })
 }
 
 ///|
 pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
-  let lines = text.split("\n").collect()
+  let lines = strip_bom(text).split("\n").collect()
   let mut encoding = "ISO8859-1"
   let mut flag_mode = "char"
   let mut try_chars = ""

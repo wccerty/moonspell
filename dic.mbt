@@ -72,7 +72,7 @@ pub fn parse_dic_entry(line : String) -> DicEntry? {
 
 ///|
 pub fn parse_dic(text : String) -> Result[Dictionary, DicParseError] {
-  let lines = text.split("\n").collect()
+  let lines = strip_bom(text).split("\n").collect()
   let mut header_index = -1
   let mut header = ""
   for i in 0..<lines.length() {

@@ -7,15 +7,36 @@ pub(all) struct SpellResult {
 }
 
 ///|
+fn flag_tokens(flag_mode : String, flags : String) -> Array[String] {
+  let result : Array[String] = []
+  if flag_mode == "num" {
+    for token in flags.split(",") {
+      let value = token.to_owned()
+      if !value.is_empty() {
+        result.push(value)
+      }
+    }
+  } else if flag_mode == "long" {
+    let chars = flags.to_array()
+    let mut i = 0
+    while i + 1 < chars.length() {
+      result.push(chars[i].to_string() + chars[i + 1].to_string())
+      i += 2
+    }
+  } else {
+    for c in flags {
+      result.push(c.to_string())
+    }
+  }
+  result
+}
+
+///|
 fn flags_contain(flag_mode : String, flags : String, flag : String) -> Bool {
   if flag.is_empty() {
     false
-  } else if flag_mode == "num" {
-    flags.split(",").any(item => item.to_owned() == flag)
   } else {
-    // char mode is exact; long mode is conservative until non-overlapping
-    // two-character flag matching is added.
-    flags.contains(flag)
+    flag_tokens(flag_mode, flags).contains(flag)
   }
 }
 
@@ -46,39 +67,91 @@ fn entry_can_be_affixed(config : AffixConfig, entry : DicEntry) -> Bool {
 }
 
 ///|
-fn condition_matches_char(pattern : String, c : Char) -> Bool {
+fn condition_width(pattern : String) -> Int {
   let chars = pattern.to_array()
-  if chars.length() == 0 || pattern == "." {
-    return true
-  }
-  if chars.length() >= 3 && chars[0] == '[' && chars[chars.length() - 1] == ']' {
-    let negate = chars[1] == '^'
-    let start = if negate { 2 } else { 1 }
-    let mut found = false
-    for i in start..<(chars.length() - 1) {
-      if chars[i] == c {
-        found = true
-        break
+  let mut width = 0
+  let mut i = 0
+  while i < chars.length() {
+    if chars[i] == '[' {
+      let mut j = i + 1
+      while j < chars.length() && chars[j] != ']' {
+        j += 1
       }
+      if j >= chars.length() {
+        return -1
+      }
+      width += 1
+      i = j + 1
+    } else {
+      width += 1
+      i += 1
     }
-    return if negate { !found } else { found }
   }
-  chars.length() == 1 && chars[0] == c
+  width
+}
+
+///|
+fn condition_matches_at(pattern : String, text : Array[Char], start : Int) -> Bool {
+  let pattern_chars = pattern.to_array()
+  let mut pattern_index = 0
+  let mut text_index = start
+  while pattern_index < pattern_chars.length() {
+    if pattern_chars[pattern_index] == '[' {
+      let mut end = pattern_index + 1
+      while end < pattern_chars.length() && pattern_chars[end] != ']' {
+        end += 1
+      }
+      if end >= pattern_chars.length() || text_index >= text.length() {
+        return false
+      }
+      let negate = pattern_index + 1 < end && pattern_chars[pattern_index + 1] == '^'
+      let char_start = if negate { pattern_index + 2 } else { pattern_index + 1 }
+      let mut found = false
+      for i in char_start..<end {
+        if pattern_chars[i] == text[text_index] {
+          found = true
+          break
+        }
+      }
+      if (negate && found) || (!negate && !found) {
+        return false
+      }
+      pattern_index = end + 1
+      text_index += 1
+    } else if pattern_chars[pattern_index] == '.' {
+      if text_index >= text.length() {
+        return false
+      }
+      pattern_index += 1
+      text_index += 1
+    } else {
+      if text_index >= text.length() || pattern_chars[pattern_index] != text[text_index] {
+        return false
+      }
+      pattern_index += 1
+      text_index += 1
+    }
+  }
+  true
 }
 
 ///|
 fn condition_matches(rule : AffixRule, stem : String) -> Bool {
+  let condition = rule.condition
+  if condition.is_empty() || condition == "." {
+    return true
+  }
+  let width = condition_width(condition)
   let chars = stem.to_array()
-  if chars.length() == 0 {
+  if width < 0 || width > chars.length() {
     return false
   }
-  match rule.kind {
-    Prefix => condition_matches_char(rule.condition, chars[0])
-    Suffix => condition_matches_char(rule.condition, chars[chars.length() - 1])
+  let start = match rule.kind {
+    Prefix => 0
+    Suffix => chars.length() - width
   }
+  condition_matches_at(condition, chars, start)
 }
-
-///|
 fn ends_with(text : StringView, suffix : String) -> Bool {
   let text_len = text.length()
   let suffix_len = suffix.length()
@@ -155,6 +228,46 @@ fn suffix_result(
 }
 
 ///|
+fn twofold_suffix_result(
+  dictionary : Dictionary,
+  config : AffixConfig,
+  word : StringView,
+  outer : AffixRule,
+  inner : AffixRule,
+) -> SpellResult? {
+  if outer.add.is_empty() || inner.add.is_empty() {
+    return None
+  }
+  if !ends_with(word, outer.add) {
+    return None
+  }
+  let intermediate = word.view(end_offset=word.length() - outer.add.length()).to_owned()
+  if !condition_matches(outer, intermediate) {
+    return None
+  }
+  if !flags_contain(config.flag_mode, inner.continuation, outer.flag) {
+    return None
+  }
+  if !ends_with(intermediate.view(), inner.add) {
+    return None
+  }
+  let stem = intermediate.view(end_offset=intermediate.length() - inner.add.length()).to_owned() + inner.strip
+  if !condition_matches(inner, stem) {
+    return None
+  }
+  for entry in dictionary.find_entries(stem) {
+    if flags_contain(config.flag_mode, entry.flags, inner.flag) && entry_can_be_affixed(config, entry) {
+      return Some({
+        accepted: true,
+        stem: Some(stem),
+        prefix: None,
+        suffix: Some(outer.add),
+      })
+    }
+  }
+  None
+}
+///|
 fn cross_result(
   dictionary : Dictionary,
   config : AffixConfig,
@@ -198,7 +311,7 @@ fn cross_result(
 }
 
 ///|
-pub fn spell(dictionary : Dictionary, config : AffixConfig, word : String) -> SpellResult {
+fn spell_core(dictionary : Dictionary, config : AffixConfig, word : String) -> SpellResult {
   match exact_result(dictionary, config, word) {
     Some(result) => return result
     None => ()
@@ -216,6 +329,14 @@ pub fn spell(dictionary : Dictionary, config : AffixConfig, word : String) -> Sp
       None => ()
     }
   }
+  for outer in config.suffixes {
+    for inner in config.suffixes {
+      match twofold_suffix_result(dictionary, config, view, outer, inner) {
+        Some(result) => return result
+        None => ()
+      }
+    }
+  }
   for prefix in config.prefixes {
     for suffix in config.suffixes {
       match cross_result(dictionary, config, view, prefix, suffix) {
@@ -225,4 +346,131 @@ pub fn spell(dictionary : Dictionary, config : AffixConfig, word : String) -> Sp
     }
   }
   { accepted: false, stem: None, prefix: None, suffix: None, }
+}
+///|
+fn ascii_lower(text : String) -> String {
+  let result = StringBuilder()
+  for c in text {
+    if c >= 'A' && c <= 'Z' {
+      result.write_char((c.to_int() + 32).unsafe_to_char())
+    } else {
+      result.write_char(c)
+    }
+  }
+  result.to_string()
+}
+
+
+///|
+fn ascii_upper_char(c : Char) -> Char {
+  if c >= 'a' && c <= 'z' {
+    (c.to_int() - 32).unsafe_to_char()
+  } else {
+    c
+  }
+}
+
+///|
+fn capitalize_ascii(text : String) -> String {
+  let chars = text.to_array()
+  if chars.length() == 0 {
+    return text
+  }
+  let result = StringBuilder()
+  result.write_char(ascii_upper_char(chars[0]))
+  for i in 1..<chars.length() {
+    result.write_char(chars[i])
+  }
+  result.to_string()
+}
+///|
+fn is_all_upper(text : String) -> Bool {
+  let mut has_letter = false
+  let mut valid = true
+  for c in text {
+    if c >= 'a' && c <= 'z' {
+      valid = false
+      break
+    }
+    if c >= 'A' && c <= 'Z' {
+      has_letter = true
+    }
+  }
+  has_letter && valid
+}
+
+///|
+fn is_capitalized(text : String) -> Bool {
+  let chars = text.to_array()
+  if chars.length() == 0 || chars[0] < 'A' || chars[0] > 'Z' {
+    return false
+  }
+  for i in 1..<chars.length() {
+    if chars[i] >= 'A' && chars[i] <= 'Z' {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn strip_trailing_periods(text : String) -> String {
+  let mut end = text.length()
+  while end > 0 && text.unsafe_get(end - 1) == '.' {
+    end -= 1
+  }
+  if end == text.length() {
+    text
+  } else {
+    text.view(end_offset=end).to_owned()
+  }
+}
+
+///|
+fn case_variant_result(
+  dictionary : Dictionary,
+  config : AffixConfig,
+  word : String,
+) -> SpellResult? {
+  if is_all_upper(word) || is_capitalized(word) {
+    let lower = ascii_lower(word)
+    if lower != word {
+      let result = spell_core(dictionary, config, lower)
+      if result.accepted {
+        return Some(result)
+      }
+    }
+    let capitalized = capitalize_ascii(lower)
+    if capitalized != word {
+      let result = spell_core(dictionary, config, capitalized)
+      if result.accepted {
+        return Some(result)
+      }
+    }
+  }
+  None
+}
+
+///|
+pub fn spell(dictionary : Dictionary, config : AffixConfig, word : String) -> SpellResult {
+  let direct = spell_core(dictionary, config, word)
+  if direct.accepted {
+    return direct
+  }
+  let without_periods = strip_trailing_periods(word)
+  if without_periods != word {
+    let bare = spell_core(dictionary, config, without_periods)
+    if bare.accepted {
+      return bare
+    }
+    match case_variant_result(dictionary, config, without_periods) {
+      Some(result) => return result
+      None => ()
+    }
+  }
+  match case_variant_result(dictionary, config, word) {
+    Some(result) => return result
+    None => ()
+  }
+  direct
 }

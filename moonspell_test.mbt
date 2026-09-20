@@ -88,3 +88,47 @@ test "suggestion engine includes generated affix forms" {
   assert_true(suggestions.length() > 0)
   assert_eq(suggestions[0].word, "uncreate")
 }
+test "long flags are matched as two-character units" {
+  let dictionary = @moonspell.parse_dic("1\nroot/ABCD\n").unwrap()
+  let config = @moonspell.parse_aff("FLAG long\nPFX AB Y 1\nPFX AB 0 ab .\nPFX BC Y 1\nPFX BC 0 bc .\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "abroot").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "bcroot").accepted)
+}
+
+test "numeric flags are matched as comma-separated units" {
+  let dictionary = @moonspell.parse_dic("1\nroot/1,2\n").unwrap()
+  let config = @moonspell.parse_aff("FLAG num\nPFX 1 Y 1\nPFX 1 0 pre .\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "preroot").accepted)
+}
+
+test "multi-character suffix conditions match the stem ending" {
+  let dictionary = @moonspell.parse_dic("2\nhappy/Y\nboy/Y\n").unwrap()
+  let config = @moonspell.parse_aff("SFX Y Y 2\nSFX Y y ier [^aeiou]y\nSFX Y 0 er [aeiou]y\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "happier").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "boier").accepted)
+}
+
+test "continuation flags allow a second suffix" {
+  let dictionary = @moonspell.parse_dic("1\nread/X\n").unwrap()
+  let config = @moonspell.parse_aff("SFX X Y 1\nSFX X 0 able/Y .\nSFX Y Y 1\nSFX Y 0 s .\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "readables").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "readablex").accepted)
+}
+test "parsers accept a UTF-8 BOM" {
+  let dictionary = @moonspell.parse_dic("\u{FEFF}1\nhello\n").unwrap()
+  assert_true(dictionary.has_word("hello"))
+  let config = @moonspell.parse_aff("\u{FEFF}SET UTF-8\n").unwrap()
+  assert_eq(config.encoding, "UTF-8")
+}
+test "capitalization and trailing periods follow Hunspell basics" {
+  let dictionary = @moonspell.parse_dic("5\nhello\nNASA\netc\ntext\nHunspell\n").unwrap()
+  let config = @moonspell.parse_aff("").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "Hello").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "HELLO").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "NASA.").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "etc.").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "Text.").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "TEXT.").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "HUNSPELL.").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "Nasa").accepted)
+}
