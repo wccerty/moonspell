@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Install native toolchain
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+
+      - name: Show versions
+        run: moon version --all
+
+      - name: Check
+        run: moon check --target all
+
+      - name: Test
+        run: moon test
+
+      - name: Build native CLI
+        run: moon build --target native
+
+      - name: Run native CLI
+        run: moon run --target native cmd/main
