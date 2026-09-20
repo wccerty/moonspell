@@ -5,12 +5,14 @@ fn usage() -> Unit {
   println("  moonspell validate <aff> <dic>")
   println("  moonspell check <aff> <dic> <word>...")
   println("  moonspell suggest <aff> <dic> <word> [--limit N]")
+  println("  moonspell check-file <aff> <dic> <word-file>")
+  println("  moonspell suggest-file <aff> <dic> <word-file> [--limit N]")
 }
 
 ///|
 fn read_file(path : String) -> String? {
   try {
-    Some(@fs.read_file_to_string(path))
+    Some(@lib.strip_bom(@fs.read_file_to_string(path)))
   } catch {
     _ => None
   }
@@ -131,6 +133,68 @@ fn suggest(args : Array[String]) -> Unit {
 }
 
 ///|
+fn check_file(args : Array[String]) -> Unit {
+  if args.length() < 5 {
+    usage()
+    return
+  }
+  match load(args[2], args[3]) {
+    Some((config, dictionary)) => {
+      let text = match read_file(args[4]) {
+        Some(value) => value
+        None => {
+          println("Failed to read word file: " + args[4])
+          return
+        }
+      }
+      for line in text.split("\n") {
+        let word = line.trim().to_owned()
+        if !word.is_empty() {
+          let status = if @lib.spell(dictionary, config, word).accepted {
+            "accepted"
+          } else {
+            "rejected"
+          }
+          println(word + "\t" + status)
+        }
+      }
+    }
+    None => ()
+  }
+}
+
+///|
+fn suggest_file(args : Array[String]) -> Unit {
+  if args.length() < 5 {
+    usage()
+    return
+  }
+  match load(args[2], args[3]) {
+    Some((config, dictionary)) => {
+      let text = match read_file(args[4]) {
+        Some(value) => value
+        None => {
+          println("Failed to read word file: " + args[4])
+          return
+        }
+      }
+      let limit = parse_limit(args)
+      for line in text.split("\n") {
+        let word = line.trim().to_owned()
+        if !word.is_empty() {
+          let suggestions = @lib.suggest(dictionary, config, word, limit)
+          let words : Array[String] = []
+          for suggestion in suggestions {
+            words.push(suggestion.word)
+          }
+          println(word + "\t" + words.join(", "))
+        }
+      }
+    }
+    None => ()
+  }
+}
+///|
 fn main {
   let args = @env.args()
   if args.length() < 2 {
@@ -141,6 +205,8 @@ fn main {
     "validate" => validate(args)
     "check" => check(args)
     "suggest" => suggest(args)
+    "check-file" => check_file(args)
+    "suggest-file" => suggest_file(args)
     "version" | "--version" | "-v" => println("MoonSpell " + @lib.version())
     _ => usage()
   }
