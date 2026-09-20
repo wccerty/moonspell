@@ -282,16 +282,40 @@ fn case_candidates(
   result
 }
 ///|
+fn parse_map_elements(mapping : String) -> Array[String] {
+  let chars = mapping.to_array()
+  let result : Array[String] = []
+  let mut index = 0
+  while index < chars.length() {
+    if chars[index] == '(' {
+      let mut close = index + 1
+      while close < chars.length() && chars[close] != ')' {
+        close += 1
+      }
+      if close < chars.length() {
+        result.push(mapping.view(start_offset=index + 1, end_offset=close).to_owned())
+        index = close + 1
+      } else {
+        result.push(chars[index].to_string())
+        index += 1
+      }
+    } else {
+      result.push(chars[index].to_string())
+      index += 1
+    }
+  }
+  result
+}
+
+///|
 fn map_candidates(word : String, config : AffixConfig) -> Array[String] {
   let result : Array[String] = []
   for mapping in config.maps {
-    let chars = mapping.to_array()
-    for i in 0..<chars.length() {
-      let from = chars[i].to_string()
-      for j in 0..<chars.length() {
+    let elements = parse_map_elements(mapping)
+    for i in 0..<elements.length() {
+      for j in 0..<elements.length() {
         if i != j {
-          let to = chars[j].to_string()
-          match replace_first(word, from, to) {
+          match replace_first(word, elements[i], elements[j]) {
             Some(candidate) => result.push(candidate)
             None => ()
           }
@@ -301,7 +325,6 @@ fn map_candidates(word : String, config : AffixConfig) -> Array[String] {
   }
   result
 }
-
 ///|
 fn try_candidates(word : String, config : AffixConfig, limit : Int) -> Array[String] {
   let result : Array[String] = []
