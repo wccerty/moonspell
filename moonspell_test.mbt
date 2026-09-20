@@ -49,3 +49,42 @@ test "reject malformed affix rule" {
     Err(_) => ()
   }
 }
+test "basic spelling engine handles exact, prefix, suffix and cross product" {
+  let dictionary = @moonspell.parse_dic("3\ncreate/U\nrun/S\nclear/UA\n").unwrap()
+  let config = @moonspell.parse_aff("PFX U Y 1\nPFX U 0 un .\nSFX S Y 1\nSFX S 0 s .\nSFX A Y 1\nSFX A 0 ed .\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "create").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "uncreate").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "runs").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "uncleared").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "missing").accepted)
+}
+
+test "basic spelling engine honors NEEDAFFIX and FORBIDDENWORD" {
+  let dictionary = @moonspell.parse_dic("2\nroot/XU\nbad/F\n").unwrap()
+  let config = @moonspell.parse_aff("NEEDAFFIX X\nFORBIDDENWORD F\nPFX U Y 1\nPFX U 0 un .\n").unwrap()
+  assert_false(@moonspell.spell(dictionary, config, "root").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "unroot").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "bad").accepted)
+}
+test "levenshtein distance is stable" {
+  assert_eq(@moonspell.levenshtein_distance("example", "example"), 0)
+  assert_eq(@moonspell.levenshtein_distance("exsample", "example"), 1)
+  assert_eq(@moonspell.levenshtein_distance("kitten", "sitting"), 3)
+}
+
+test "suggestion engine ranks dictionary candidates" {
+  let dictionary = @moonspell.parse_dic("1\nexample\n").unwrap()
+  let config = @moonspell.parse_aff("").unwrap()
+  let suggestions = @moonspell.suggest(dictionary, config, "exsample", 3)
+  assert_true(suggestions.length() > 0)
+  assert_eq(suggestions[0].word, "example")
+  assert_eq(suggestions[0].distance, 1)
+}
+
+test "suggestion engine includes generated affix forms" {
+  let dictionary = @moonspell.parse_dic("1\ncreate/U\n").unwrap()
+  let config = @moonspell.parse_aff("PFX U Y 1\nPFX U 0 un .\n").unwrap()
+  let suggestions = @moonspell.suggest(dictionary, config, "uncreat", 3)
+  assert_true(suggestions.length() > 0)
+  assert_eq(suggestions[0].word, "uncreate")
+}
