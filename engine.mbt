@@ -84,6 +84,13 @@ fn entry_can_be_affixed(config : AffixConfig, entry : DicEntry) -> Bool {
 }
 
 ///|
+fn rule_needs_affix(config : AffixConfig, rule : AffixRule) -> Bool {
+  match config.need_affix {
+    Some(flag) => flags_contain(config.flag_mode, rule.continuation, flag)
+    None => false
+  }
+}
+///|
 fn rule_is_only_in_compound(config : AffixConfig, rule : AffixRule) -> Bool {
   match config.only_in_compound {
     Some(flag) => flags_contain(config.flag_mode, rule.continuation, flag)
@@ -227,7 +234,7 @@ fn prefix_result(
     return None
   }
   for entry in dictionary.find_entries(stem) {
-    if flags_contain(config.flag_mode, entry.flags, rule.flag) && entry_can_be_affixed(config, entry) && !rule_is_only_in_compound(config, rule) {
+    if flags_contain(config.flag_mode, entry.flags, rule.flag) && entry_can_be_affixed(config, entry) && !rule_is_only_in_compound(config, rule) && !rule_needs_affix(config, rule) {
       return Some({ accepted: true, stem: Some(stem), prefix: Some(rule.add), suffix: None, })
     }
   }
@@ -249,7 +256,7 @@ fn suffix_result(
     return None
   }
   for entry in dictionary.find_entries(stem) {
-    if flags_contain(config.flag_mode, entry.flags, rule.flag) && entry_can_be_affixed(config, entry) && !rule_is_only_in_compound(config, rule) {
+    if flags_contain(config.flag_mode, entry.flags, rule.flag) && entry_can_be_affixed(config, entry) && !rule_is_only_in_compound(config, rule) && !rule_needs_affix(config, rule) {
       return Some({ accepted: true, stem: Some(stem), prefix: None, suffix: Some(rule.add), })
     }
   }
@@ -285,7 +292,7 @@ fn twofold_suffix_result(
     return None
   }
   for entry in dictionary.find_entries(stem) {
-    if flags_contain(config.flag_mode, entry.flags, inner.flag) && entry_can_be_affixed(config, entry) && !rule_is_only_in_compound(config, inner) && !rule_is_only_in_compound(config, outer) {
+    if flags_contain(config.flag_mode, entry.flags, inner.flag) && entry_can_be_affixed(config, entry) && !rule_is_only_in_compound(config, inner) && !rule_is_only_in_compound(config, outer) && !rule_needs_affix(config, outer) {
       return Some({
         accepted: true,
         stem: Some(stem),
@@ -585,6 +592,64 @@ fn compound_role_matches(
 }
 
 ///|
+///|
+fn compound_pattern_matches(
+  config : AffixConfig,
+  pattern : CompoundPattern,
+  left_part : String,
+  left : CompoundPartMatch,
+  right_part : StringView,
+  right : CompoundPartMatch,
+) -> Bool {
+  if pattern.end_zero && (left.prefix || left.suffix) {
+    return false
+  }
+  if !pattern.end_zero && !pattern.end_chars.is_empty() &&
+    !ends_with(left_part.view(), pattern.end_chars) {
+    return false
+  }
+  match pattern.end_flag {
+    Some(flag) => if !flags_contain(config.flag_mode, left.flags, flag) { return false }
+    None => ()
+  }
+  if !pattern.begin_chars.is_empty() && right_part.find(pattern.begin_chars) != Some(0) {
+    return false
+  }
+  match pattern.begin_flag {
+    Some(flag) => if !flags_contain(config.flag_mode, right.flags, flag) { return false }
+    None => ()
+  }
+  true
+}
+
+///|
+fn compound_boundary_forbidden_by_pattern(
+  dictionary : Dictionary,
+  config : AffixConfig,
+  word : StringView,
+  left_part : String,
+  left : CompoundPartMatch,
+  boundary : Int,
+) -> Bool {
+  let mut end = boundary + 1
+  while end <= word.length() {
+    let right_view = word.view(start_offset=boundary, end_offset=end)
+    if dictionary.find_entries(left_part + " " + right_view.to_owned()).length() > 0 {
+      return true
+    }
+    for right in compound_part_matches(dictionary, config, right_view) {
+      for pattern in config.compound_patterns {
+        if pattern.replacement is None &&
+          compound_pattern_matches(config, pattern, left_part, left, right_view, right) {
+          return true
+        }
+      }
+    }
+    end += 1
+  }
+  false
+}
+
 fn compound_part_length_ok(part : StringView, config : AffixConfig) -> Bool {
   part.length() >= config.compound_min ||
   (part.length() == 1 && part.unsafe_get(0).to_int() == 45)
@@ -637,6 +702,9 @@ fn compound_search(
       if !is_last && item.suffix && !item.suffix_permit {
         continue
       }
+      if !is_last && compound_boundary_forbidden_by_pattern(dictionary, config, word, part, item, end) {
+        continue
+      }
       if config.check_compound_dup && is_last && previous_part == part {
         continue
       }
@@ -667,6 +735,172 @@ fn compound_search(
   false
 }
 
+priv struct CompoundRuleToken {
+  flag : String
+  quantifier : String
+}
+
+///|
+fn parse_compound_rule(pattern : String, flag_mode : String) -> Array[CompoundRuleToken] {
+  let chars = pattern.to_array()
+  let result : Array[CompoundRuleToken] = []
+  let mut index = 0
+  while index < chars.length() {
+    let flag = if chars[index] == '(' {
+      let mut close = index + 1
+      while close < chars.length() && chars[close] != ')' {
+        close += 1
+      }
+      if close >= chars.length() {
+        return []
+      }
+      let value = pattern.view(start_offset=index + 1, end_offset=close).to_owned()
+      index = close + 1
+      value
+    } else if flag_mode == "long" && index + 1 < chars.length() {
+      let value = chars[index].to_string() + chars[index + 1].to_string()
+      index += 2
+      value
+    } else {
+      let value = chars[index].to_string()
+      index += 1
+      value
+    }
+    let quantifier = if index < chars.length() && (chars[index] == '*' || chars[index] == '?') {
+      let value = chars[index].to_string()
+      index += 1
+      value
+    } else {
+      ""
+    }
+    result.push({ flag, quantifier, })
+  }
+  result
+}
+
+///|
+fn compound_rule_match_at(
+  tokens : Array[CompoundRuleToken],
+  flags : Array[String],
+  token_index : Int,
+  part_index : Int,
+  flag_mode : String,
+) -> Bool {
+  if token_index >= tokens.length() {
+    return part_index >= flags.length()
+  }
+  let token = tokens[token_index]
+  let can_consume = part_index < flags.length() &&
+    flags_contain(flag_mode, flags[part_index], token.flag)
+  match token.quantifier {
+    "" => can_consume && compound_rule_match_at(tokens, flags, token_index + 1, part_index + 1, flag_mode)
+    "?" =>
+      compound_rule_match_at(tokens, flags, token_index + 1, part_index, flag_mode) ||
+      (can_consume && compound_rule_match_at(tokens, flags, token_index + 1, part_index + 1, flag_mode))
+    "*" =>
+      compound_rule_match_at(tokens, flags, token_index + 1, part_index, flag_mode) ||
+      (can_consume && compound_rule_match_at(tokens, flags, token_index, part_index + 1, flag_mode))
+    _ => false
+  }
+}
+
+///|
+fn compound_rule_matches(
+  pattern : String,
+  flags : Array[String],
+  flag_mode : String,
+) -> Bool {
+  if flags.length() == 0 {
+    return false
+  }
+  let tokens = parse_compound_rule(pattern, flag_mode)
+  if tokens.length() == 0 {
+    return false
+  }
+  compound_rule_match_at(tokens, flags, 0, 0, flag_mode)
+}
+
+///|
+fn compound_rule_search(
+  dictionary : Dictionary,
+  config : AffixConfig,
+  word : StringView,
+  pattern : String,
+  start : Int,
+  flags : Array[String],
+  max_parts : Int,
+) -> Bool {
+  if start >= word.length() || flags.length() >= max_parts {
+    return false
+  }
+  let mut end = start + 1
+  while end <= word.length() {
+    let is_last = end == word.length()
+    let part_view = word.view(start_offset=start, end_offset=end)
+    if compound_part_length_ok(part_view, config) {
+      for item in compound_part_matches(dictionary, config, part_view) {
+        if !is_last && (item.prefix || item.suffix) {
+          continue
+        }
+        let next_flags = flags.copy()
+        next_flags.push(item.flags)
+        if is_last {
+          if compound_rule_matches(pattern, next_flags, config.flag_mode) {
+            return true
+          }
+        } else if compound_rule_search(
+          dictionary,
+          config,
+          word,
+          pattern,
+          end,
+          next_flags,
+          max_parts,
+        ) {
+          return true
+        }
+      }
+    }
+    end += 1
+  }
+  false
+}
+
+///|
+fn compound_rule_result(
+  dictionary : Dictionary,
+  config : AffixConfig,
+  word : String,
+) -> Bool {
+  if config.compound_rules.length() == 0 {
+    return false
+  }
+  for pattern in config.compound_rules {
+    if compound_rule_search(dictionary, config, word.view(), pattern, 0, [], 32) {
+      return true
+    }
+  }
+  false
+}
+///|
+fn compound_rep_correctable(
+  dictionary : Dictionary,
+  config : AffixConfig,
+  word : String,
+) -> Bool {
+  for rule in config.replacements {
+    match replacement_candidate(word, rule.from, rule.to) {
+      Some(candidate) => {
+        if dictionary.find_entries(candidate).length() > 0 {
+          return true
+        }
+      }
+      None => ()
+    }
+  }
+  false
+}
+
 ///|
 fn compound_result(
   dictionary : Dictionary,
@@ -681,7 +915,8 @@ fn compound_result(
   if word.length() < config.compound_min * 2 {
     return false
   }
-  compound_search(dictionary, config, word.view(), 0, 0, "", max_parts)
+  let matched = compound_search(dictionary, config, word.view(), 0, 0, "", max_parts)
+  matched && !(config.check_compound_rep && compound_rep_correctable(dictionary, config, word))
 }
 ///|
 fn spell_core(dictionary : Dictionary, config : AffixConfig, word : String) -> SpellResult {
@@ -719,6 +954,9 @@ fn spell_core(dictionary : Dictionary, config : AffixConfig, word : String) -> S
     }
   }
   if compound_result(dictionary, config, word) {
+    return { accepted: true, stem: None, prefix: None, suffix: None, }
+  }
+  if compound_rule_result(dictionary, config, word) {
     return { accepted: true, stem: None, prefix: None, suffix: None, }
   }
   { accepted: false, stem: None, prefix: None, suffix: None, }
@@ -803,6 +1041,25 @@ fn strip_trailing_periods(text : String) -> String {
 }
 
 ///|
+fn result_has_forbidden_homonym(
+  dictionary : Dictionary,
+  config : AffixConfig,
+  result : SpellResult,
+) -> Bool {
+  match result.stem {
+    Some(stem) => {
+      let lower_stem = ascii_lower(stem)
+      for entry in dictionary.entries {
+        if ascii_lower(entry.word) == lower_stem && entry_is_forbidden(config, entry) {
+          return true
+        }
+      }
+      false
+    }
+    None => false
+  }
+}
+///|
 fn result_is_keepcase_only(
   dictionary : Dictionary,
   config : AffixConfig,
@@ -810,19 +1067,18 @@ fn result_is_keepcase_only(
 ) -> Bool {
   match result.stem {
     Some(stem) => {
-      let entries = dictionary.find_entries(stem)
-      if entries.length() == 0 {
-        true
-      } else {
-        let mut has_non_keepcase = false
-        for entry in entries {
+      let mut has_match = false
+      let mut has_non_keepcase = false
+      let lower_stem = ascii_lower(stem)
+      for entry in dictionary.entries {
+        if ascii_lower(entry.word) == lower_stem {
+          has_match = true
           if !entry_keeps_case(config, entry) {
             has_non_keepcase = true
-            break
           }
         }
-        !has_non_keepcase
       }
+      has_match && !has_non_keepcase
     }
     None => false
   }
@@ -837,14 +1093,14 @@ fn case_variant_result(
     let lower = ascii_lower(word)
     if lower != word {
       let result = spell_core(dictionary, config, lower)
-      if result.accepted && !result_is_keepcase_only(dictionary, config, result) {
+      if result.accepted && !result_is_keepcase_only(dictionary, config, result) && !result_has_forbidden_homonym(dictionary, config, result) {
         return Some(result)
       }
     }
     let capitalized = capitalize_ascii(lower)
     if capitalized != word {
       let result = spell_core(dictionary, config, capitalized)
-      if result.accepted && !result_is_keepcase_only(dictionary, config, result) {
+      if result.accepted && !result_is_keepcase_only(dictionary, config, result) && !result_has_forbidden_homonym(dictionary, config, result) {
         return Some(result)
       }
     }

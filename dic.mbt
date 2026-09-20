@@ -60,11 +60,13 @@ pub fn parse_dic_entry(line : String) -> DicEntry? {
       Some({ word: word.to_owned(), flags, morph, })
     }
     None => {
-      let (word, morph) = split_at_first_space(value)
-      if word.is_empty() {
-        None
-      } else {
-        Some({ word, flags: "", morph, })
+      match value.find("\t") {
+        Some(index) => {
+          let word = value.view(end_offset=index).trim().to_owned()
+          let morph = value.view(start_offset=index + 1).trim().to_owned()
+          if word.is_empty() { None } else { Some({ word, flags: "", morph, }) }
+        }
+        None => Some({ word: value.to_owned(), flags: "", morph: "", })
       }
     }
   }

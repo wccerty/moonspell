@@ -237,3 +237,60 @@ test "TRY suggestions generate one-edit candidates" {
   assert_true(suggestions.length() > 0)
   assert_eq(suggestions[0].word, "form")
 }
+test "COMPOUNDRULE matches exact flag sequences" {
+  let dictionary = @moonspell.parse_dic("3\na/A\nb/B\nc/BC\n").unwrap()
+  let config = @moonspell.parse_aff("COMPOUNDMIN 1\nCOMPOUNDRULE 1\nCOMPOUNDRULE ABC\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "abc").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "acc").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "ba").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "aa").accepted)
+}
+
+test "COMPOUNDRULE supports star and optional quantifiers" {
+  let dictionary = @moonspell.parse_dic("3\na/A\nb/B\nc/C\n").unwrap()
+  let star = @moonspell.parse_aff("COMPOUNDMIN 1\nCOMPOUNDRULE 1\nCOMPOUNDRULE A*B*C*\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, star, "aa").accepted)
+  assert_true(@moonspell.spell(dictionary, star, "aabbcc").accepted)
+  assert_true(@moonspell.spell(dictionary, star, "cc").accepted)
+  assert_false(@moonspell.spell(dictionary, star, "ba").accepted)
+  let optional = @moonspell.parse_aff("COMPOUNDMIN 1\nCOMPOUNDRULE 1\nCOMPOUNDRULE A?B?C?\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, optional, "a").accepted)
+  assert_true(@moonspell.spell(dictionary, optional, "abc").accepted)
+  assert_true(@moonspell.spell(dictionary, optional, "bc").accepted)
+  assert_false(@moonspell.spell(dictionary, optional, "aa").accepted)
+  assert_false(@moonspell.spell(dictionary, optional, "abcc").accepted)
+}
+test "CHECKCOMPOUNDPATTERN forbids configured boundaries" {
+  let dictionary = @moonspell.parse_dic("2\nfoo/A\nbar/A\n").unwrap()
+  let config = @moonspell.parse_aff("COMPOUNDFLAG A\nCHECKCOMPOUNDPATTERN 1\nCHECKCOMPOUNDPATTERN o b\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "barfoo").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "foobar").accepted)
+}
+
+test "CHECKCOMPOUNDREP rejects compounds correctable to a dictionary word" {
+  let dictionary = @moonspell.parse_dic("3\nfoo/A\nbar/A\nfxobar\n").unwrap()
+  let config = @moonspell.parse_aff("CHECKCOMPOUNDREP\nCOMPOUNDFLAG A\nREP 1\nREP o x\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "barfoo").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "foobar").accepted)
+}
+test "forbidden homonyms block case-folded variants" {
+  let dictionary = @moonspell.parse_dic("3\nkg\nKg/X\nKG/X\n").unwrap()
+  let config = @moonspell.parse_aff("FORBIDDENWORD X\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "kg").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "Kg").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "KG").accepted)
+}
+
+test "NEEDAFFIX on affix continuation requires another affix" {
+  let dictionary = @moonspell.parse_dic("1\nfoo/A\n").unwrap()
+  let config = @moonspell.parse_aff("NEEDAFFIX X\nSFX A Y 1\nSFX A 0 s/XB .\nSFX B Y 1\nSFX B 0 baz .\n").unwrap()
+  assert_false(@moonspell.spell(dictionary, config, "foos").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "foosbaz").accepted)
+}
+test "dictionary word pairs block concatenated compounds" {
+  let dictionary = @moonspell.parse_dic("3\nword/Y\ncompound/Y\ncompound word\n").unwrap()
+  let config = @moonspell.parse_aff("COMPOUNDFLAG Y\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "word").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "compound").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "compoundword").accepted)
+}

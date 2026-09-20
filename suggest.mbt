@@ -37,7 +37,7 @@ fn remove_suffix_strip(stem : String, strip : String) -> String? {
 fn generate_candidates(dictionary : Dictionary, config : AffixConfig) -> Array[String] {
   let candidates : Array[String] = []
   for entry in dictionary.entries {
-    if entry_is_forbidden(config, entry) {
+    if entry_is_forbidden(config, entry) || entry.word.contains(" ") {
       continue
     }
     if !entry_needs_affix(config, entry) {

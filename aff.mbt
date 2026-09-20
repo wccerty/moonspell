@@ -22,6 +22,15 @@ pub(all) struct ReplacementRule {
 }
 
 ///|
+pub(all) struct CompoundPattern {
+  end_chars : String
+  end_flag : String?
+  end_zero : Bool
+  begin_chars : String
+  begin_flag : String?
+  replacement : String?
+}
+///|
 pub(all) struct AffixConfig {
   encoding : String
   flag_mode : String
@@ -47,8 +56,11 @@ pub(all) struct AffixConfig {
   compound_forbid : String?
   only_in_compound : String?
   check_compound_dup : Bool
+  check_compound_rep : Bool
   check_compound_case : Bool
   check_compound_triple : Bool
+  compound_rules : Array[String]
+  compound_patterns : Array[CompoundPattern]
   unsupported : Array[String]
 }
 
@@ -130,8 +142,11 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
   let mut compound_forbid : String? = None
   let mut only_in_compound : String? = None
   let mut check_compound_dup = false
+  let mut check_compound_rep = false
   let mut check_compound_case = false
   let mut check_compound_triple = false
+  let compound_rules : Array[String] = []
+  let compound_patterns : Array[CompoundPattern] = []
   let unsupported : Array[String] = []
   let mut current_kind = AffixKind::Prefix
   let mut current_flag = ""
@@ -226,8 +241,46 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
         if tokens.length() >= 2 { only_in_compound = Some(tokens[1]) }
       }
       "CHECKCOMPOUNDDUP" => check_compound_dup = true
+      "CHECKCOMPOUNDREP" => check_compound_rep = true
       "CHECKCOMPOUNDCASE" => check_compound_case = true
       "CHECKCOMPOUNDTRIPLE" => check_compound_triple = true
+      "COMPOUNDRULE" => {
+        if tokens.length() >= 2 {
+          match parse_decimal_count(tokens[1]) {
+            Some(_) => ()
+            None => compound_rules.push(tokens[1])
+          }
+        }
+      }
+      "CHECKCOMPOUNDPATTERN" => {
+        if tokens.length() >= 3 {
+          match parse_decimal_count(tokens[1]) {
+            Some(_) => if tokens.length() == 2 { () }
+            None => {
+              let (end_chars_raw, end_flag) = match tokens[1].split_once("/") {
+                Some((chars, flag)) => (chars.to_owned(), Some(flag.to_owned()))
+                None => (tokens[1], None)
+              }
+              let (begin_chars_raw, begin_flag) = match tokens[2].split_once("/") {
+                Some((chars, flag)) => (chars.to_owned(), Some(flag.to_owned()))
+                None => (tokens[2], None)
+              }
+              let end_zero = end_chars_raw == "0"
+              let end_chars = if end_zero { "" } else { end_chars_raw }
+              let begin_chars = if begin_chars_raw == "0" { "" } else { begin_chars_raw }
+              let replacement = if tokens.length() >= 4 { Some(tokens[3]) } else { None }
+              compound_patterns.push({
+                end_chars,
+                end_flag,
+                end_zero,
+                begin_chars,
+                begin_flag,
+                replacement,
+              })
+            }
+          }
+        }
+      }
       "AF" => {
         if tokens.length() >= 2 {
           match parse_decimal_count(tokens[1]) {
@@ -320,8 +373,11 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
     compound_forbid,
     only_in_compound,
     check_compound_dup,
+    check_compound_rep,
     check_compound_case,
     check_compound_triple,
+    compound_rules,
+    compound_patterns,
     unsupported,
   })
 }
