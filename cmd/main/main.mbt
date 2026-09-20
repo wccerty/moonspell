@@ -11,9 +11,7 @@ fn usage() -> Unit {
 
 ///|
 fn read_file(path : String) -> String? {
-  try {
-    Some(@lib.strip_bom(@fs.read_file_to_string(path)))
-  } catch {
+  Some(@lib.strip_bom(@fs.read_file_to_string(path))) catch {
     _ => None
   }
 }
@@ -40,7 +38,10 @@ fn parse_limit(args : Array[String]) -> Int {
 }
 
 ///|
-fn load(aff_path : String, dic_path : String) -> (@lib.AffixConfig, @lib.Dictionary)? {
+fn load(
+  aff_path : String,
+  dic_path : String,
+) -> (@lib.AffixConfig, @lib.Dictionary)? {
   let aff_text = match read_file(aff_path) {
     Some(text) => text
     None => {
@@ -80,8 +81,16 @@ fn validate(args : Array[String]) -> Unit {
   }
   match load(args[2], args[3]) {
     Some((config, dictionary)) => {
-      println("affix directives parsed: " + config.prefixes.length().to_string() + " prefixes, " + config.suffixes.length().to_string() + " suffixes")
-      println("dictionary entries parsed: " + dictionary.entries.length().to_string())
+      println(
+        "affix directives parsed: " +
+        config.prefixes.length().to_string() +
+        " prefixes, " +
+        config.suffixes.length().to_string() +
+        " suffixes",
+      )
+      println(
+        "dictionary entries parsed: " + dictionary.entries.length().to_string(),
+      )
     }
     None => ()
   }
@@ -94,7 +103,7 @@ fn check(args : Array[String]) -> Unit {
     return
   }
   match load(args[2], args[3]) {
-    Some((config, dictionary)) => {
+    Some((config, dictionary)) =>
       for i in 4..<args.length() {
         let word = args[i]
         let result = @lib.spell(dictionary, config, word)
@@ -104,7 +113,6 @@ fn check(args : Array[String]) -> Unit {
           println(word + ": rejected")
         }
       }
-    }
     None => ()
   }
 }
@@ -194,6 +202,7 @@ fn suggest_file(args : Array[String]) -> Unit {
     None => ()
   }
 }
+
 ///|
 fn main {
   let args = @env.args()

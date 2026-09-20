@@ -1,0 +1,140 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "wccerty/moonspell"
+
+// Values
+pub fn levenshtein_distance(String, String) -> Int
+
+pub fn parse_aff(String) -> Result[AffixConfig, AffixParseError]
+
+pub fn parse_dic(String) -> Result[Dictionary, DicParseError]
+
+pub fn parse_dic_entry(String) -> DicEntry?
+
+pub fn spell(Dictionary, AffixConfig, String) -> SpellResult
+
+pub fn strip_bom(String) -> String
+
+pub fn suggest(Dictionary, AffixConfig, String, Int) -> Array[Suggestion]
+
+pub fn version() -> String
+
+// Errors
+pub suberror AffixParseError {
+  InvalidAffixHeader(Int, String)
+  InvalidAffixRule(Int, String)
+}
+
+pub suberror DicParseError {
+  EmptyDictionary
+  InvalidHeader(String)
+}
+
+// Types and methods
+pub(all) struct AffixConfig {
+  encoding : String
+  language : String
+  ignore_chars : String
+  break_enabled : Bool
+  break_explicit : Bool
+  break_patterns : Array[String]
+  flag_mode : String
+  try_chars : String
+  keyboard : String
+  word_chars : String
+  flag_aliases : Array[String]
+  morph_aliases : Array[String]
+  prefixes : Array[AffixRule]
+  suffixes : Array[AffixRule]
+  replacements : Array[ReplacementRule]
+  phone_rules : Array[PhoneRule]
+  iconv_rules : Array[ReplacementRule]
+  oconv_rules : Array[ReplacementRule]
+  maps : Array[String]
+  forbidden_word : String?
+  keep_case : String?
+  need_affix : String?
+  no_suggest : String?
+  circumfix : String?
+  max_ngram_sugs : Int
+  complex_prefixes : Bool
+  check_sharps : Bool
+  compound_min : Int
+  compound_word_max : Int
+  compound_flag : String?
+  compound_begin : String?
+  compound_middle : String?
+  compound_end : String?
+  compound_permit : String?
+  compound_forbid : String?
+  only_in_compound : String?
+  check_compound_dup : Bool
+  check_compound_rep : Bool
+  check_compound_case : Bool
+  check_compound_triple : Bool
+  compound_rules : Array[String]
+  compound_patterns : Array[CompoundPattern]
+  unsupported : Array[String]
+}
+
+pub(all) enum AffixKind {
+  Prefix
+  Suffix
+} derive(Eq)
+
+pub(all) struct AffixRule {
+  kind : AffixKind
+  flag : String
+  cross_product : Bool
+  strip : String
+  add : String
+  continuation : String
+  condition : String
+}
+
+pub(all) struct CompoundPattern {
+  end_chars : String
+  end_flag : String?
+  end_zero : Bool
+  begin_chars : String
+  begin_flag : String?
+  replacement : String?
+}
+
+pub(all) struct DicEntry {
+  word : String
+  flags : String
+  morph : String
+}
+
+pub(all) struct Dictionary {
+  declared_count : Int
+  entries : Array[DicEntry]
+}
+pub fn Dictionary::find_entries(Self, String) -> Array[DicEntry]
+pub fn Dictionary::has_word(Self, String) -> Bool
+
+pub(all) struct PhoneRule {
+  pattern : String
+  replacement : String
+}
+
+pub(all) struct ReplacementRule {
+  from : String
+  to : String
+}
+
+pub(all) struct SpellResult {
+  accepted : Bool
+  stem : String?
+  prefix : String?
+  suffix : String?
+}
+
+pub(all) struct Suggestion {
+  word : String
+  distance : Int
+}
+
+// Type aliases
+
+// Traits

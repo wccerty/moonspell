@@ -19,7 +19,7 @@ repository = "https://github.com/wccerty/moonspell"
 
 license = "Apache-2.0"
 
-keywords = ["hunspell", "spellchecker", "nlp", "moonbit"]
+keywords = [ "hunspell", "spellchecker", "nlp", "moonbit" ]
 
 preferred_target = "wasm"
 

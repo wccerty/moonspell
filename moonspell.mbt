@@ -3,6 +3,7 @@
 pub fn version() -> String {
   "0.1.0"
 }
+
 ///|
 /// Remove a leading UTF-8 byte-order mark from decoded text.
 pub fn strip_bom(text : String) -> String {

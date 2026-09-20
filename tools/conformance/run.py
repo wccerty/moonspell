@@ -149,30 +149,42 @@ def suggestion_fixture(
         root,
     )
     actual = parse_suggestions(process.stdout)
-    total = min(len(wrong_words), len(expected_lines))
     exact = 0
     top1 = 0
     details = []
-    for index in range(total):
-        word = wrong_words[index]
-        expected = expected_lines[index]
+    expected_index = 0
+    for word in wrong_words:
         got = actual.get(word, [])
-        expected_items = [item.strip() for item in expected.split(",") if item.strip()]
+        # Hunspell's -a mode emits suggestion lines only for misspelled words
+        # that produced a suggestion. Preserve that mapping for fixtures with
+        # unsuggestable entries instead of pairing every .wrong line blindly.
+        if not got:
+            continue
+        has_expected = expected_index < len(expected_lines)
+        if has_expected:
+            expected = expected_lines[expected_index]
+            expected_index += 1
+            expected_items = [item.strip() for item in expected.split(",") if item.strip()]
+        else:
+            expected_items = []
         expected_text = ", ".join(expected_items)
         actual_text = ", ".join(got[: len(expected_items)])
-        if actual_text == expected_text:
+        is_exact = has_expected and expected_items and actual_text == expected_text
+        is_top1 = has_expected and bool(expected_items and expected_items[0] in got)
+        if is_exact:
             exact += 1
-        if expected_items and expected_items[0] in got:
+        if is_top1:
             top1 += 1
         details.append(
             {
                 "word": word,
                 "expected": expected_items,
                 "actual": got,
-                "exact": actual_text == expected_text,
-                "top1": bool(expected_items and expected_items[0] in got),
+                "exact": is_exact,
+                "top1": is_top1,
             }
         )
+    total = len(expected_lines)
     return {
         "present": True,
         "total": total,

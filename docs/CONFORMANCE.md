@@ -1,14 +1,14 @@
-# MoonSpell Hunspell Conformance Report
-
 > Baseline generated on 2026-09-20 from the complete Hunspell v1.7.3 `tests/` suite. This is a development baseline, not a full-compatibility claim.
+
+# MoonSpell Hunspell Conformance Report
 
 - Hunspell reference: `hunspell-1.7.3`
 - Fixtures scanned: `144`
 - Good-word fixtures passed: `85/112`
 - Wrong-word fixtures passed: `80/95`
 - Suggestion fixtures: `37`
-- Suggestion top-1 hits: `89/173`
-- Suggestion exact-list matches: `77/173`
+- Suggestion top-1 hits: `124/173`
+- Suggestion exact-list matches: `106/173`
 
 | Fixture | Good | Wrong | Suggest exact | Suggest top-1 |
 |---|---:|---:|---:|---:|
@@ -34,8 +34,8 @@
 | `allcaps3` | pass | pass | - | - |
 | `allcaps_utf` | pass | pass | 3/3 | 3/3 |
 | `arabic` | skip | pass | - | - |
-| `base` | pass | pass | 9/11 | 10/11 |
-| `base_utf` | fail | pass | 10/13 | 12/13 |
+| `base` | pass | pass | 10/11 | 11/11 |
+| `base_utf` | fail | pass | 10/13 | 13/13 |
 | `break` | pass | pass | - | - |
 | `breakdefault` | pass | pass | 5/5 | 5/5 |
 | `breakoff` | pass | pass | - | - |
@@ -97,11 +97,11 @@
 | `gh1095` | skip | skip | - | - |
 | `gh646` | skip | skip | - | - |
 | `hu` | fail | skip | - | - |
-| `i35725` | pass | pass | 4/10 | 6/10 |
+| `i35725` | pass | pass | 5/10 | 7/10 |
 | `i53643` | fail | pass | - | - |
 | `i54633` | fail | pass | 0/2 | 0/2 |
 | `i54980` | fail | skip | - | - |
-| `i58202` | pass | pass | 2/13 | 3/13 |
+| `i58202` | pass | pass | 11/13 | 12/13 |
 | `i68568` | skip | pass | - | - |
 | `i68568utf` | skip | pass | - | - |
 | `iconv` | pass | skip | - | - |
@@ -111,11 +111,11 @@
 | `ignoresug` | pass | skip | - | - |
 | `ignoreutf` | pass | skip | - | - |
 | `IJ` | pass | pass | 0/1 | 1/1 |
-| `keepcase` | pass | fail | 4/8 | 4/8 |
+| `keepcase` | pass | fail | 1/8 | 3/8 |
 | `korean` | pass | pass | - | - |
 | `limit-multiple-compounding` | pass | fail | - | - |
 | `map` | skip | pass | 0/3 | 0/3 |
-| `maputf` | skip | pass | 2/3 | 2/3 |
+| `maputf` | skip | pass | 1/3 | 1/3 |
 | `morph` | fail | skip | - | - |
 | `needaffix` | pass | pass | - | - |
 | `needaffix2` | pass | skip | - | - |
@@ -123,7 +123,7 @@
 | `needaffix4` | pass | skip | - | - |
 | `needaffix5` | fail | fail | - | - |
 | `nepali` | fail | skip | - | - |
-| `ngram_utf_fix` | pass | pass | 0/1 | 0/1 |
+| `ngram_utf_fix` | pass | pass | 0/1 | 1/1 |
 | `nosuggest` | pass | pass | 0/0 | 0/0 |
 | `oconv` | pass | pass | 3/3 | 3/3 |
 | `oconv2` | pass | skip | - | - |
@@ -135,18 +135,18 @@
 | `opentaal_cpdpat2` | fail | pass | - | - |
 | `opentaal_forbiddenword1` | pass | fail | 0/1 | 0/1 |
 | `opentaal_forbiddenword2` | pass | fail | 0/1 | 0/1 |
-| `opentaal_keepcase` | pass | fail | 0/8 | 0/8 |
-| `ph` | skip | pass | 0/11 | 0/11 |
-| `ph2` | skip | pass | 0/14 | 0/14 |
-| `phone` | skip | pass | 0/1 | 1/1 |
+| `opentaal_keepcase` | pass | fail | 0/8 | 1/8 |
+| `ph` | skip | pass | 11/11 | 11/11 |
+| `ph2` | skip | pass | 14/14 | 14/14 |
+| `phone` | skip | pass | 1/1 | 1/1 |
 | `rep` | skip | pass | 3/8 | 3/8 |
 | `reputf` | skip | pass | 1/1 | 1/1 |
 | `right_to_left_mark` | pass | skip | - | - |
 | `simplifiedtriple` | fail | pass | - | - |
 | `slash` | pass | skip | - | - |
-| `sug` | skip | pass | 9/13 | 11/13 |
-| `sug2` | skip | pass | 1/3 | 1/3 |
-| `sugutf` | skip | pass | 9/12 | 10/12 |
+| `sug` | skip | pass | 6/13 | 9/13 |
+| `sug2` | skip | pass | 3/3 | 3/3 |
+| `sugutf` | skip | pass | 6/12 | 8/12 |
 | `timelimit` | pass | pass | 0/0 | 0/0 |
 | `utf8` | pass | skip | - | - |
 | `utf8_bom` | pass | skip | - | - |

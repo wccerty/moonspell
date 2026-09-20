@@ -63,16 +63,41 @@ pub fn parse_dic_entry(line : String) -> DicEntry? {
         return None
       }
       let (flags, morph) = split_at_first_space(suffix)
-      Some({ word: word.to_owned().replace_all(old="\u{FDE1}", new="/"), flags, morph, })
+      Some({
+        word: word.to_owned().replace_all(old="\u{FDE1}", new="/"),
+        flags,
+        morph,
+      })
     }
     None => {
-      match value.find("\t") {
-        Some(index) => {
+      let morph_index = match value.find(" ph:") {
+        Some(index) => Some((index, 1))
+        None =>
+          match value.find("\t") {
+            Some(index) => Some((index, 1))
+            None => None
+          }
+      }
+      match morph_index {
+        Some((index, offset)) => {
           let word = value.view(end_offset=index).trim().to_owned()
-          let morph = value.view(start_offset=index + 1).trim().to_owned()
-          if word.is_empty() { None } else { Some({ word: word.replace_all(old="\u{FDE1}", new="/"), flags: "", morph, }) }
+          let morph = value.view(start_offset=index + offset).trim().to_owned()
+          if word.is_empty() {
+            None
+          } else {
+            Some({
+              word: word.replace_all(old="\u{FDE1}", new="/"),
+              flags: "",
+              morph,
+            })
+          }
         }
-        None => Some({ word: value.replace_all(old="\u{FDE1}", new="/").to_owned(), flags: "", morph: "", })
+        None =>
+          Some({
+            word: value.replace_all(old="\u{FDE1}", new="/").to_owned(),
+            flags: "",
+            morph: "",
+          })
       }
     }
   }

@@ -22,6 +22,12 @@ pub(all) struct ReplacementRule {
 }
 
 ///|
+pub(all) struct PhoneRule {
+  pattern : String
+  replacement : String
+}
+
+///|
 pub(all) struct CompoundPattern {
   end_chars : String
   end_flag : String?
@@ -30,6 +36,7 @@ pub(all) struct CompoundPattern {
   begin_flag : String?
   replacement : String?
 }
+
 ///|
 pub(all) struct AffixConfig {
   encoding : String
@@ -47,6 +54,7 @@ pub(all) struct AffixConfig {
   prefixes : Array[AffixRule]
   suffixes : Array[AffixRule]
   replacements : Array[ReplacementRule]
+  phone_rules : Array[PhoneRule]
   iconv_rules : Array[ReplacementRule]
   oconv_rules : Array[ReplacementRule]
   maps : Array[String]
@@ -55,6 +63,7 @@ pub(all) struct AffixConfig {
   need_affix : String?
   no_suggest : String?
   circumfix : String?
+  max_ngram_sugs : Int
   complex_prefixes : Bool
   check_sharps : Bool
   compound_min : Int
@@ -83,7 +92,12 @@ pub suberror AffixParseError {
 
 ///|
 fn tokenize_aff_line(line : String) -> Array[String] {
-  line.replace_all(old="\t", new=" ").split(" ").filter(token => token.length() > 0).map(token => token.to_owned()).collect()
+  line
+  .replace_all(old="\t", new=" ")
+  .split(" ")
+  .filter(token => token.length() > 0)
+  .map(token => token.to_owned())
+  .collect()
 }
 
 ///|
@@ -106,13 +120,10 @@ fn parse_affix_rule(
   if tokens.length() < 4 {
     return Err(InvalidAffixRule(line_number, tokens.join(" ")))
   }
-  let condition = if tokens.length() >= 5 {
-    tokens[4]
-  } else {
-    "."
-  }
+  let condition = if tokens.length() >= 5 { tokens[4] } else { "." }
   let (add, continuation) = match tokens[3].split_once("/") {
-    Some((add, flags)) => (normalize_affix_text(add.to_owned()), flags.to_owned())
+    Some((add, flags)) =>
+      (normalize_affix_text(add.to_owned()), flags.to_owned())
     None => (normalize_affix_text(tokens[3]), "")
   }
   Ok({
@@ -144,6 +155,7 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
   let prefixes : Array[AffixRule] = []
   let suffixes : Array[AffixRule] = []
   let replacements : Array[ReplacementRule] = []
+  let phone_rules : Array[PhoneRule] = []
   let iconv_rules : Array[ReplacementRule] = []
   let oconv_rules : Array[ReplacementRule] = []
   let maps : Array[String] = []
@@ -152,6 +164,7 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
   let mut need_affix : String? = None
   let mut no_suggest : String? = None
   let mut circumfix : String? = None
+  let mut max_ngram_sugs = 4
   let mut complex_prefixes = false
   let mut check_sharps = false
   let mut compound_min = 3
@@ -187,10 +200,8 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
     match directive {
       "COMPLEXPREFIXES" => complex_prefixes = true
       "CHECKSHARPS" => check_sharps = true
-      "IGNORE" => {
-        if tokens.length() >= 2 { ignore_chars = tokens[1] }
-      }
-      "BREAK" => {
+      "IGNORE" => if tokens.length() >= 2 { ignore_chars = tokens[1] }
+      "BREAK" =>
         if tokens.length() >= 2 {
           break_explicit = true
           match parse_decimal_count(tokens[1]) {
@@ -208,106 +219,81 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
             }
           }
         }
-      }
-      "LANG" => {
-        if tokens.length() >= 2 { language = tokens[1] }
-      }
-      "SET" => {
-        if tokens.length() >= 2 {
-          encoding = tokens[1]
-        }
-      }
-      "FLAG" => {
-        if tokens.length() >= 2 {
-          flag_mode = tokens[1]
-        }
-      }
-      "KEY" => {
-        if tokens.length() >= 2 { keyboard = tokens[1] }
-      }
-      "NOSUGGEST" => {
-        if tokens.length() >= 2 { no_suggest = Some(tokens[1]) }
-      }
-      "TRY" => {
-        if tokens.length() >= 2 {
-          try_chars = tokens[1]
-        }
-      }
-      "WORDCHARS" => {
-        if tokens.length() >= 2 {
-          word_chars = tokens[1]
-        }
-      }
-      "FORBIDDENWORD" => {
+      "LANG" => if tokens.length() >= 2 { language = tokens[1] }
+      "SET" => if tokens.length() >= 2 { encoding = tokens[1] }
+      "FLAG" => if tokens.length() >= 2 { flag_mode = tokens[1] }
+      "KEY" => if tokens.length() >= 2 { keyboard = tokens[1] }
+      "NOSUGGEST" => if tokens.length() >= 2 { no_suggest = Some(tokens[1]) }
+      "TRY" => if tokens.length() >= 2 { try_chars = tokens[1] }
+      "WORDCHARS" => if tokens.length() >= 2 { word_chars = tokens[1] }
+      "FORBIDDENWORD" =>
         if tokens.length() >= 2 {
           forbidden_word = Some(tokens[1])
         }
-      }
-      "KEEPCASE" => {
+      "KEEPCASE" => if tokens.length() >= 2 { keep_case = Some(tokens[1]) }
+      "NEEDAFFIX" => if tokens.length() >= 2 { need_affix = Some(tokens[1]) }
+      "CIRCUMFIX" => if tokens.length() >= 2 { circumfix = Some(tokens[1]) }
+      "MAXNGRAMSUGS" =>
         if tokens.length() >= 2 {
-          keep_case = Some(tokens[1])
+          match parse_decimal_count(tokens[1]) {
+            Some(value) => max_ngram_sugs = value
+            None => ()
+          }
         }
-      }
-      "NEEDAFFIX" => {
-        if tokens.length() >= 2 {
-          need_affix = Some(tokens[1])
-        }
-      }
-      "CIRCUMFIX" => {
-        if tokens.length() >= 2 {
-          circumfix = Some(tokens[1])
-        }
-      }
-      "COMPOUNDMIN" => {
+      "COMPOUNDMIN" =>
         if tokens.length() >= 2 {
           match parse_decimal_count(tokens[1]) {
             Some(value) => compound_min = value
             None => ()
           }
         }
-      }
-      "COMPOUNDWORDMAX" => {
+      "COMPOUNDWORDMAX" =>
         if tokens.length() >= 2 {
           match parse_decimal_count(tokens[1]) {
             Some(value) => compound_word_max = value
             None => ()
           }
         }
-      }
-      "COMPOUNDFLAG" => {
-        if tokens.length() >= 2 { compound_flag = Some(tokens[1]) }
-      }
-      "COMPOUNDBEGIN" => {
-        if tokens.length() >= 2 { compound_begin = Some(tokens[1]) }
-      }
-      "COMPOUNDMIDDLE" => {
-        if tokens.length() >= 2 { compound_middle = Some(tokens[1]) }
-      }
-      "COMPOUNDEND" => {
-        if tokens.length() >= 2 { compound_end = Some(tokens[1]) }
-      }
-      "COMPOUNDPERMITFLAG" => {
-        if tokens.length() >= 2 { compound_permit = Some(tokens[1]) }
-      }
-      "COMPOUNDFORBIDFLAG" => {
-        if tokens.length() >= 2 { compound_forbid = Some(tokens[1]) }
-      }
-      "ONLYINCOMPOUND" => {
-        if tokens.length() >= 2 { only_in_compound = Some(tokens[1]) }
-      }
+      "COMPOUNDFLAG" =>
+        if tokens.length() >= 2 {
+          compound_flag = Some(tokens[1])
+        }
+      "COMPOUNDBEGIN" =>
+        if tokens.length() >= 2 {
+          compound_begin = Some(tokens[1])
+        }
+      "COMPOUNDMIDDLE" =>
+        if tokens.length() >= 2 {
+          compound_middle = Some(tokens[1])
+        }
+      "COMPOUNDEND" =>
+        if tokens.length() >= 2 {
+          compound_end = Some(tokens[1])
+        }
+      "COMPOUNDPERMITFLAG" =>
+        if tokens.length() >= 2 {
+          compound_permit = Some(tokens[1])
+        }
+      "COMPOUNDFORBIDFLAG" =>
+        if tokens.length() >= 2 {
+          compound_forbid = Some(tokens[1])
+        }
+      "ONLYINCOMPOUND" =>
+        if tokens.length() >= 2 {
+          only_in_compound = Some(tokens[1])
+        }
       "CHECKCOMPOUNDDUP" => check_compound_dup = true
       "CHECKCOMPOUNDREP" => check_compound_rep = true
       "CHECKCOMPOUNDCASE" => check_compound_case = true
       "CHECKCOMPOUNDTRIPLE" => check_compound_triple = true
-      "COMPOUNDRULE" => {
+      "COMPOUNDRULE" =>
         if tokens.length() >= 2 {
           match parse_decimal_count(tokens[1]) {
             Some(_) => ()
             None => compound_rules.push(tokens[1])
           }
         }
-      }
-      "CHECKCOMPOUNDPATTERN" => {
+      "CHECKCOMPOUNDPATTERN" =>
         if tokens.length() >= 3 {
           match parse_decimal_count(tokens[1]) {
             Some(_) => if tokens.length() == 2 { () }
@@ -316,14 +302,23 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
                 Some((chars, flag)) => (chars.to_owned(), Some(flag.to_owned()))
                 None => (tokens[1], None)
               }
-              let (begin_chars_raw, begin_flag) = match tokens[2].split_once("/") {
+              let (begin_chars_raw, begin_flag) = match
+                tokens[2].split_once("/") {
                 Some((chars, flag)) => (chars.to_owned(), Some(flag.to_owned()))
                 None => (tokens[2], None)
               }
               let end_zero = end_chars_raw == "0"
               let end_chars = if end_zero { "" } else { end_chars_raw }
-              let begin_chars = if begin_chars_raw == "0" { "" } else { begin_chars_raw }
-              let replacement = if tokens.length() >= 4 { Some(tokens[3]) } else { None }
+              let begin_chars = if begin_chars_raw == "0" {
+                ""
+              } else {
+                begin_chars_raw
+              }
+              let replacement = if tokens.length() >= 4 {
+                Some(tokens[3])
+              } else {
+                None
+              }
               compound_patterns.push({
                 end_chars,
                 end_flag,
@@ -335,23 +330,20 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
             }
           }
         }
-      }
-      "AF" => {
+      "AF" =>
         if tokens.length() >= 2 {
           match parse_decimal_count(tokens[1]) {
             Some(_) => ()
             None => flag_aliases.push(tokens[1])
           }
         }
-      }
-      "AM" => {
+      "AM" =>
         if tokens.length() >= 2 {
           match parse_decimal_count(tokens[1]) {
             Some(_) => ()
             None => morph_aliases.push(tokens[1])
           }
         }
-      }
       "PFX" | "SFX" => {
         if tokens.length() < 2 {
           return Err(InvalidAffixHeader(i + 1, raw))
@@ -387,29 +379,36 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
           }
         }
       }
-      "ICONV" => {
+      "ICONV" =>
         if tokens.length() >= 3 {
           iconv_rules.push({ from: tokens[1], to: tokens[2], })
         }
-      }
-      "OCONV" => {
+      "OCONV" =>
         if tokens.length() >= 3 {
           oconv_rules.push({ from: tokens[1], to: tokens[2], })
         }
-      }
-      "REP" => {
+      "REP" =>
         if tokens.length() >= 3 {
           replacements.push({ from: tokens[1], to: tokens[2], })
         }
-      }
-      "MAP" => {
+      "PHONE" =>
+        if tokens.length() >= 3 {
+          match parse_decimal_count(tokens[2]) {
+            Some(_) => ()
+            None =>
+              phone_rules.push({
+                pattern: tokens[1],
+                replacement: tokens[2].replace_all(old="_", new=""),
+              })
+          }
+        }
+      "MAP" =>
         if tokens.length() >= 2 {
           match parse_decimal_count(tokens[1]) {
             Some(_) => ()
             None => maps.push(tokens[1])
           }
         }
-      }
       _ => unsupported.push(directive)
     }
   }
@@ -429,6 +428,7 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
     prefixes,
     suffixes,
     replacements,
+    phone_rules,
     iconv_rules,
     oconv_rules,
     maps,
@@ -437,6 +437,7 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
     need_affix,
     no_suggest,
     circumfix,
+    max_ngram_sugs,
     complex_prefixes,
     check_sharps,
     compound_min,
