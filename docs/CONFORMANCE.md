@@ -4,11 +4,11 @@
 
 - Hunspell reference: `hunspell-1.7.3`
 - Fixtures scanned: `144`
-- Good-word fixtures passed: `25/112`
-- Wrong-word fixtures passed: `78/95`
+- Good-word fixtures passed: `51/112`
+- Wrong-word fixtures passed: `73/95`
 - Suggestion fixtures: `37`
-- Suggestion top-1 hits: `75/173`
-- Suggestion exact-list matches: `62/173`
+- Suggestion top-1 hits: `84/173`
+- Suggestion exact-list matches: `68/173`
 
 | Fixture | Good | Wrong | Suggest exact | Suggest top-1 |
 |---|---:|---:|---:|---:|
@@ -22,8 +22,8 @@
 | `1748408-3` | pass | skip | - | - |
 | `1748408-4` | pass | skip | - | - |
 | `1975530` | pass | pass | - | - |
-| `2970240` | fail | pass | - | - |
-| `2970242` | fail | pass | - | - |
+| `2970240` | pass | fail | - | - |
+| `2970242` | pass | fail | - | - |
 | `2999225` | fail | skip | - | - |
 | `affixes` | pass | skip | - | - |
 | `alias` | fail | skip | - | - |
@@ -35,21 +35,21 @@
 | `allcaps_utf` | fail | pass | 1/3 | 1/3 |
 | `arabic` | skip | pass | - | - |
 | `base` | pass | pass | 8/11 | 10/11 |
-| `base_utf` | fail | pass | 8/13 | 10/13 |
+| `base_utf` | fail | pass | 9/13 | 12/13 |
 | `break` | fail | pass | - | - |
 | `breakdefault` | fail | pass | 2/5 | 2/5 |
 | `breakoff` | pass | pass | - | - |
-| `checkcompoundcase` | fail | pass | - | - |
+| `checkcompoundcase` | pass | pass | - | - |
 | `checkcompoundcase2` | fail | pass | - | - |
-| `checkcompoundcaseutf` | fail | pass | - | - |
-| `checkcompounddup` | fail | pass | - | - |
+| `checkcompoundcaseutf` | pass | fail | - | - |
+| `checkcompounddup` | pass | pass | - | - |
 | `checkcompoundpattern` | fail | pass | - | - |
-| `checkcompoundpattern2` | fail | pass | - | - |
-| `checkcompoundpattern3` | fail | pass | - | - |
-| `checkcompoundpattern4` | fail | pass | - | - |
+| `checkcompoundpattern2` | fail | fail | - | - |
+| `checkcompoundpattern3` | fail | fail | - | - |
+| `checkcompoundpattern4` | fail | fail | - | - |
 | `checkcompoundrep` | fail | pass | - | - |
-| `checkcompoundrep2` | fail | skip | - | - |
-| `checkcompoundtriple` | fail | pass | - | - |
+| `checkcompoundrep2` | pass | skip | - | - |
+| `checkcompoundtriple` | pass | pass | - | - |
 | `checksharps` | fail | pass | 0/1 | 0/1 |
 | `checksharpsutf` | fail | pass | 0/1 | 0/1 |
 | `circumfix` | fail | pass | - | - |
@@ -58,34 +58,34 @@
 | `complexprefixes2` | fail | skip | - | - |
 | `complexprefixesutf` | fail | pass | - | - |
 | `compound_wnum_overflow` | skip | skip | - | - |
-| `compoundaffix` | fail | pass | - | - |
-| `compoundaffix2` | fail | skip | - | - |
-| `compoundaffix3` | fail | pass | - | - |
-| `compoundflag` | fail | pass | - | - |
-| `compoundforbid` | fail | pass | - | - |
+| `compoundaffix` | pass | pass | - | - |
+| `compoundaffix2` | pass | skip | - | - |
+| `compoundaffix3` | pass | pass | - | - |
+| `compoundflag` | pass | pass | - | - |
+| `compoundforbid` | pass | pass | - | - |
 | `compoundrule` | fail | pass | - | - |
 | `compoundrule2` | fail | pass | - | - |
 | `compoundrule3` | fail | pass | - | - |
-| `compoundrule4` | fail | fail | - | - |
+| `compoundrule4` | fail | pass | - | - |
 | `compoundrule5` | fail | pass | - | - |
 | `compoundrule6` | fail | pass | - | - |
-| `compoundrule7` | fail | fail | - | - |
-| `compoundrule8` | fail | fail | - | - |
+| `compoundrule7` | fail | pass | - | - |
+| `compoundrule8` | fail | pass | - | - |
 | `condition` | fail | pass | - | - |
 | `condition_utf` | pass | pass | - | - |
 | `conditionalprefix` | fail | pass | - | - |
-| `digits_in_words` | skip | fail | - | - |
+| `digits_in_words` | skip | pass | - | - |
 | `dotless_i` | fail | fail | - | - |
 | `encoding` | fail | skip | - | - |
 | `flag` | fail | skip | - | - |
 | `flaglong` | fail | skip | - | - |
 | `flagnum` | fail | skip | - | - |
 | `flagutf8` | fail | skip | - | - |
-| `fogemorpheme` | fail | fail | - | - |
+| `fogemorpheme` | pass | pass | - | - |
 | `forbiddenword` | pass | fail | - | - |
-| `forceucase` | fail | pass | 0/2 | 0/2 |
+| `forceucase` | pass | fail | 0/2 | 0/2 |
 | `fullstrip` | pass | skip | - | - |
-| `germancompounding` | fail | fail | - | - |
+| `germancompounding` | fail | pass | - | - |
 | `germancompoundingold` | fail | fail | - | - |
 | `gh1002` | skip | pass | 0/0 | 0/0 |
 | `gh1018` | skip | skip | - | - |
@@ -111,48 +111,48 @@
 | `ignoresug` | fail | skip | - | - |
 | `ignoreutf` | fail | skip | - | - |
 | `IJ` | pass | fail | 0/1 | 0/1 |
-| `keepcase` | pass | fail | 2/8 | 2/8 |
+| `keepcase` | pass | pass | 6/8 | 8/8 |
 | `korean` | pass | pass | - | - |
-| `limit-multiple-compounding` | fail | pass | - | - |
+| `limit-multiple-compounding` | pass | fail | - | - |
 | `map` | skip | pass | 0/3 | 0/3 |
 | `maputf` | skip | pass | 2/3 | 2/3 |
 | `morph` | fail | skip | - | - |
-| `needaffix` | fail | pass | - | - |
-| `needaffix2` | fail | skip | - | - |
+| `needaffix` | pass | pass | - | - |
+| `needaffix2` | pass | skip | - | - |
 | `needaffix3` | pass | fail | - | - |
-| `needaffix4` | fail | skip | - | - |
+| `needaffix4` | pass | skip | - | - |
 | `needaffix5` | fail | fail | - | - |
 | `nepali` | fail | skip | - | - |
 | `ngram_utf_fix` | pass | pass | 0/1 | 0/1 |
-| `nosuggest` | fail | pass | 0/0 | 0/0 |
+| `nosuggest` | pass | pass | 0/0 | 0/0 |
 | `oconv` | pass | pass | 0/3 | 0/3 |
 | `oconv2` | fail | skip | - | - |
 | `ofz51432` | skip | skip | - | - |
 | `ofz5627151457255424` | skip | skip | - | - |
-| `onlyincompound` | fail | fail | 0/0 | 0/0 |
-| `onlyincompound2` | fail | fail | - | - |
-| `opentaal_cpdpat` | fail | pass | - | - |
+| `onlyincompound` | pass | pass | 0/0 | 0/0 |
+| `onlyincompound2` | pass | fail | - | - |
+| `opentaal_cpdpat` | pass | fail | - | - |
 | `opentaal_cpdpat2` | fail | pass | - | - |
 | `opentaal_forbiddenword1` | fail | pass | 0/1 | 0/1 |
-| `opentaal_forbiddenword2` | fail | pass | 0/1 | 0/1 |
-| `opentaal_keepcase` | fail | pass | 0/8 | 0/8 |
+| `opentaal_forbiddenword2` | pass | fail | 0/1 | 0/1 |
+| `opentaal_keepcase` | pass | fail | 0/8 | 0/8 |
 | `ph` | skip | pass | 5/11 | 7/11 |
-| `ph2` | skip | pass | 3/14 | 4/14 |
+| `ph2` | skip | fail | 1/14 | 2/14 |
 | `phone` | skip | pass | 0/1 | 1/1 |
 | `rep` | skip | pass | 3/8 | 3/8 |
 | `reputf` | skip | pass | 1/1 | 1/1 |
 | `right_to_left_mark` | fail | skip | - | - |
 | `simplifiedtriple` | fail | pass | - | - |
 | `slash` | fail | skip | - | - |
-| `sug` | skip | pass | 7/13 | 8/13 |
+| `sug` | skip | pass | 9/13 | 10/13 |
 | `sug2` | skip | pass | 1/3 | 1/3 |
-| `sugutf` | skip | pass | 7/12 | 8/12 |
-| `timelimit` | fail | pass | 0/0 | 0/0 |
+| `sugutf` | skip | pass | 8/12 | 9/12 |
+| `timelimit` | pass | pass | 0/0 | 0/0 |
 | `utf8` | pass | skip | - | - |
 | `utf8_bom` | fail | skip | - | - |
 | `utf8_bom2` | fail | skip | - | - |
 | `utf8_nonbmp` | fail | fail | 0/2 | 0/2 |
-| `utfcompound` | fail | pass | - | - |
+| `utfcompound` | pass | pass | - | - |
 | `warn` | pass | skip | - | - |
-| `wordpair` | skip | pass | - | - |
+| `wordpair` | skip | fail | - | - |
 | `zeroaffix` | pass | skip | - | - |
