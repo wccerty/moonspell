@@ -23,8 +23,8 @@ MoonSpell currently does not claim full compatibility.
 
 Full-suite baseline on 2026-09-20:
 
-- Good-word fixtures: `83/112`
-- Wrong-word fixtures: `79/95`
+- Good-word fixtures: `85/112`
+- Wrong-word fixtures: `80/95`
 - Suggestion Top-1: `79/173`
 - Suggestion exact-list matches: `66/173`
 

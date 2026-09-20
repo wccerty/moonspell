@@ -4,8 +4,8 @@
 
 - Hunspell reference: `hunspell-1.7.3`
 - Fixtures scanned: `144`
-- Good-word fixtures passed: `83/112`
-- Wrong-word fixtures passed: `79/95`
+- Good-word fixtures passed: `85/112`
+- Wrong-word fixtures passed: `80/95`
 - Suggestion fixtures: `37`
 - Suggestion top-1 hits: `79/173`
 - Suggestion exact-list matches: `66/173`
@@ -74,7 +74,7 @@
 | `condition` | fail | pass | - | - |
 | `condition_utf` | pass | pass | - | - |
 | `conditionalprefix` | fail | pass | - | - |
-| `digits_in_words` | skip | fail | - | - |
+| `digits_in_words` | skip | pass | - | - |
 | `dotless_i` | pass | pass | - | - |
 | `encoding` | fail | skip | - | - |
 | `flag` | fail | skip | - | - |
@@ -82,7 +82,7 @@
 | `flagnum` | fail | skip | - | - |
 | `flagutf8` | fail | skip | - | - |
 | `fogemorpheme` | pass | pass | - | - |
-| `forbiddenword` | fail | pass | - | - |
+| `forbiddenword` | pass | pass | - | - |
 | `forceucase` | pass | fail | 0/2 | 0/2 |
 | `fullstrip` | pass | skip | - | - |
 | `germancompounding` | fail | fail | - | - |
@@ -143,7 +143,7 @@
 | `reputf` | skip | pass | 1/1 | 1/1 |
 | `right_to_left_mark` | pass | skip | - | - |
 | `simplifiedtriple` | fail | pass | - | - |
-| `slash` | fail | skip | - | - |
+| `slash` | pass | skip | - | - |
 | `sug` | skip | pass | 9/13 | 10/13 |
 | `sug2` | skip | pass | 1/3 | 1/3 |
 | `sugutf` | skip | pass | 8/12 | 9/12 |

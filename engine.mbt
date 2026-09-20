@@ -876,6 +876,12 @@ fn compound_rule_matches(
   if flags.length() == 0 {
     return false
   }
+  if flags.length() == 1 {
+    match config.only_in_compound {
+      Some(flag) => if flags_contain(config, flags[0], flag) { return false }
+      None => ()
+    }
+  }
   let tokens = parse_compound_rule(pattern, config.flag_mode)
   if tokens.length() == 0 {
     return false
@@ -1183,12 +1189,15 @@ fn strip_trailing_periods(text : String) -> String {
 
 ///|
 fn has_exact_forbidden(dictionary : Dictionary, config : AffixConfig, word : String) -> Bool {
+  let mut found_forbidden = false
   for entry in dictionary.find_entries(word) {
     if entry_is_forbidden(config, entry) {
-      return true
+      found_forbidden = true
+    } else {
+      return false
     }
   }
-  false
+  found_forbidden
 }
 ///|
 fn result_has_forbidden_homonym(
