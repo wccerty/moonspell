@@ -18,14 +18,29 @@ explain(dictionary, word) -> DecisionTrace
 validate(aff_path, dic_path) -> ValidationReport
 ```
 
+## CLI
+
+```bash
+moon run cmd/main -- validate <aff> <dic>
+moon run cmd/main -- check <aff> <dic> <word>...
+moon run cmd/main -- suggest <aff> <dic> <word> --limit 10
+```
+
+Example with an installed en_US dictionary:
+
+```bash
+moon run --target native cmd/main -- check /path/to/en_US.aff /path/to/en_US.dic hello exsample
+moon run --target native cmd/main -- suggest /path/to/en_US.aff /path/to/en_US.dic exsample --limit 5
+```
+
 ## Development
 
 ```bash
-moon check
+moon check --target all
 moon test
-moon run cmd/main
+moon run cmd/main -- version
 moon build --target native
-moon run --target native cmd/main
+moon run --target native cmd/main -- version
 ```
 
 ## Compatibility policy
