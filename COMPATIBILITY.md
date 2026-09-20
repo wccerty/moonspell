@@ -6,9 +6,9 @@ MoonSpell currently does not claim full compatibility.
 
 | Area | Status |
 |---|---|
-| `.dic` parser | Planned |
-| `.aff` parser | Planned |
-| Exact lookup | Planned |
+| `.dic` parser | Partial: word, flags, morphology |
+| `.aff` parser | Partial: SET, FLAG, TRY, WORDCHARS, AF, AM, PFX, SFX, REP, MAP |
+| Exact lookup | Partial: raw dictionary word lookup |
 | Case handling | Planned |
 | PFX / SFX | Planned |
 | Affix conditions | Planned |
@@ -19,4 +19,4 @@ MoonSpell currently does not claim full compatibility.
 | Edit-distance suggestions | Planned |
 | Official fixture runner | Planned |
 
-Full Compatibility may only be declared after all supported Hunspell fixture behavior and suggestion output are verified against the pinned reference version.
+The parser layer is under active development. Full Compatibility may only be declared after all supported Hunspell fixture behavior and suggestion output are verified against the pinned reference version.
