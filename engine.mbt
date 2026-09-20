@@ -247,17 +247,19 @@ fn prefix_result(
   word : StringView,
   rule : AffixRule,
 ) -> SpellResult? {
-  if rule.add.is_empty() || word.find(rule.add) != Some(0) {
+  let add = apply_ignore(config, rule.add)
+  let strip = apply_ignore(config, rule.strip)
+  if add.is_empty() || word.find(add) != Some(0) {
     return None
   }
-  let remainder = word.view(start_offset=rule.add.length())
-  let stem = rule.strip + remainder.to_owned()
+  let remainder = word.view(start_offset=add.length())
+  let stem = strip + remainder.to_owned()
   if !condition_matches(rule, stem) {
     return None
   }
   for entry in dictionary.find_entries(stem) {
     if flags_contain(config, entry.flags, rule.flag) && entry_can_be_affixed(config, entry) && !rule_is_only_in_compound(config, rule) && !rule_needs_affix(config, rule) && !rule_has_circumfix(config, rule) {
-      return Some({ accepted: true, stem: Some(stem), prefix: Some(rule.add), suffix: None, })
+      return Some({ accepted: true, stem: Some(stem), prefix: Some(add), suffix: None, })
     }
   }
   None
@@ -1232,6 +1234,68 @@ fn result_is_keepcase_only(
   }
 }
 ///|
+fn apply_ignore(config : AffixConfig, word : String) -> String {
+  if config.ignore_chars.is_empty() {
+    return word
+  }
+  let ignored = config.ignore_chars.to_array()
+  let result = StringBuilder()
+  for c in word {
+    if !ignored.contains(c) {
+      result.write_char(c)
+    }
+  }
+  result.to_string()
+}
+
+///|
+fn normalized_dictionary(config : AffixConfig, dictionary : Dictionary) -> Dictionary {
+  if config.ignore_chars.is_empty() {
+    return dictionary
+  }
+  let entries : Array[DicEntry] = []
+  for entry in dictionary.entries {
+    entries.push({
+      word: apply_ignore(config, entry.word),
+      flags: entry.flags,
+      morph: entry.morph,
+    })
+  }
+  { declared_count: dictionary.declared_count, entries, }
+}
+
+///|
+fn spell_breakable(
+  dictionary : Dictionary,
+  config : AffixConfig,
+  word : String,
+) -> Bool {
+  if !config.break_enabled || config.break_patterns.length() == 0 {
+    return false
+  }
+  for position in 0..<word.length() {
+    let suffix = word.view(start_offset=position)
+    let mut matched_length = 0
+    for pattern in config.break_patterns {
+      if pattern.length() > matched_length && suffix.find(pattern) == Some(0) {
+        matched_length = pattern.length()
+      }
+    }
+    if matched_length > 0 {
+      let left = word.view(end_offset=position).to_owned()
+      let right = word.view(start_offset=position + matched_length).to_owned()
+      if config.break_explicit && (left.is_empty() || right.is_empty()) {
+        continue
+      }
+      let left_ok = left.is_empty() || spell(dictionary, config, left).accepted
+      let right_ok = right.is_empty() || spell(dictionary, config, right).accepted
+      if left_ok && right_ok && (!left.is_empty() || !right.is_empty()) {
+        return true
+      }
+    }
+  }
+  false
+}
 fn apply_conversions(rules : Array[ReplacementRule], word : String) -> String {
   let mut result = word
   let mut iteration = 0
@@ -1322,13 +1386,17 @@ fn case_variant_result(
 
 ///|
 pub fn spell(dictionary : Dictionary, config : AffixConfig, word : String) -> SpellResult {
-  let word = apply_iconv(config, word)
+  let word = apply_iconv(config, apply_ignore(config, word))
+  let dictionary = normalized_dictionary(config, dictionary)
   if has_exact_forbidden(dictionary, config, word) {
     return { accepted: false, stem: None, prefix: None, suffix: None, }
   }
   let direct = spell_core(dictionary, config, word)
   if direct.accepted {
     return direct
+  }
+  if spell_breakable(dictionary, config, word) {
+    return { accepted: true, stem: None, prefix: None, suffix: None, }
   }
   let without_periods = strip_trailing_periods(word)
   if without_periods != word {

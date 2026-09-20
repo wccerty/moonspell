@@ -313,6 +313,7 @@ pub fn suggest(
   word : String,
   limit : Int,
 ) -> Array[Suggestion] {
+  let dictionary = normalized_dictionary(config, dictionary)
   if limit <= 0 || spell(dictionary, config, word).accepted {
     return []
   }

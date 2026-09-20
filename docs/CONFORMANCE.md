@@ -4,11 +4,11 @@
 
 - Hunspell reference: `hunspell-1.7.3`
 - Fixtures scanned: `144`
-- Good-word fixtures passed: `77/112`
+- Good-word fixtures passed: `83/112`
 - Wrong-word fixtures passed: `79/95`
 - Suggestion fixtures: `37`
-- Suggestion top-1 hits: `76/173`
-- Suggestion exact-list matches: `63/173`
+- Suggestion top-1 hits: `79/173`
+- Suggestion exact-list matches: `66/173`
 
 | Fixture | Good | Wrong | Suggest exact | Suggest top-1 |
 |---|---:|---:|---:|---:|
@@ -36,8 +36,8 @@
 | `arabic` | skip | pass | - | - |
 | `base` | pass | pass | 8/11 | 10/11 |
 | `base_utf` | fail | pass | 9/13 | 12/13 |
-| `break` | fail | pass | - | - |
-| `breakdefault` | fail | pass | 2/5 | 2/5 |
+| `break` | pass | pass | - | - |
+| `breakdefault` | pass | pass | 5/5 | 5/5 |
 | `breakoff` | pass | pass | - | - |
 | `checkcompoundcase` | pass | pass | - | - |
 | `checkcompoundcase2` | fail | pass | - | - |
@@ -107,9 +107,9 @@
 | `iconv` | pass | skip | - | - |
 | `iconv2` | pass | skip | - | - |
 | `iconv_break_overflow` | skip | pass | - | - |
-| `ignore` | fail | skip | - | - |
-| `ignoresug` | fail | skip | - | - |
-| `ignoreutf` | fail | skip | - | - |
+| `ignore` | pass | skip | - | - |
+| `ignoresug` | pass | skip | - | - |
+| `ignoreutf` | pass | skip | - | - |
 | `IJ` | pass | pass | 0/1 | 1/1 |
 | `keepcase` | pass | fail | 4/8 | 4/8 |
 | `korean` | pass | pass | - | - |
@@ -141,7 +141,7 @@
 | `phone` | skip | pass | 0/1 | 1/1 |
 | `rep` | skip | pass | 3/8 | 3/8 |
 | `reputf` | skip | pass | 1/1 | 1/1 |
-| `right_to_left_mark` | fail | skip | - | - |
+| `right_to_left_mark` | pass | skip | - | - |
 | `simplifiedtriple` | fail | pass | - | - |
 | `slash` | fail | skip | - | - |
 | `sug` | skip | pass | 9/13 | 10/13 |

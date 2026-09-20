@@ -34,6 +34,10 @@ pub(all) struct CompoundPattern {
 pub(all) struct AffixConfig {
   encoding : String
   language : String
+  ignore_chars : String
+  break_enabled : Bool
+  break_explicit : Bool
+  break_patterns : Array[String]
   flag_mode : String
   try_chars : String
   word_chars : String
@@ -125,6 +129,10 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
   let lines = strip_bom(text).split("\n").collect()
   let mut encoding = "ISO8859-1"
   let mut language = ""
+  let mut ignore_chars = ""
+  let mut break_enabled = true
+  let mut break_explicit = false
+  let break_patterns : Array[String] = ["-", "–"]
   let mut flag_mode = "char"
   let mut try_chars = ""
   let mut word_chars = ""
@@ -175,6 +183,28 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
     match directive {
       "COMPLEXPREFIXES" => complex_prefixes = true
       "CHECKSHARPS" => check_sharps = true
+      "IGNORE" => {
+        if tokens.length() >= 2 { ignore_chars = tokens[1] }
+      }
+      "BREAK" => {
+        if tokens.length() >= 2 {
+          break_explicit = true
+          match parse_decimal_count(tokens[1]) {
+            Some(0) => {
+              break_enabled = false
+              break_patterns.clear()
+            }
+            Some(_) => {
+              break_enabled = true
+              break_patterns.clear()
+            }
+            None => {
+              break_enabled = true
+              break_patterns.push(tokens[1])
+            }
+          }
+        }
+      }
       "LANG" => {
         if tokens.length() >= 2 { language = tokens[1] }
       }
@@ -376,6 +406,10 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
   Ok({
     encoding,
     language,
+    ignore_chars,
+    break_enabled,
+    break_explicit,
+    break_patterns,
     flag_mode,
     try_chars,
     word_chars,
