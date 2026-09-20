@@ -25,7 +25,7 @@ Full-suite baseline on 2026-09-20:
 
 - Good-word fixtures: `85/112`
 - Wrong-word fixtures: `80/95`
-- Suggestion Top-1: `79/173`
-- Suggestion exact-list matches: `66/173`
+- Suggestion Top-1: `89/173`
+- Suggestion exact-list matches: `77/173`
 
 The parser and engine are under active development. Full Compatibility may only be declared after all supported Hunspell fixture behavior and suggestion output are verified against the pinned reference version.

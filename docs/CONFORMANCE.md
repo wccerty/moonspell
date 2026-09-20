@@ -7,8 +7,8 @@
 - Good-word fixtures passed: `85/112`
 - Wrong-word fixtures passed: `80/95`
 - Suggestion fixtures: `37`
-- Suggestion top-1 hits: `79/173`
-- Suggestion exact-list matches: `66/173`
+- Suggestion top-1 hits: `89/173`
+- Suggestion exact-list matches: `77/173`
 
 | Fixture | Good | Wrong | Suggest exact | Suggest top-1 |
 |---|---:|---:|---:|---:|
@@ -29,13 +29,13 @@
 | `alias` | pass | skip | - | - |
 | `alias2` | pass | skip | - | - |
 | `alias3` | pass | skip | - | - |
-| `allcaps` | pass | pass | 1/3 | 1/3 |
+| `allcaps` | pass | pass | 3/3 | 3/3 |
 | `allcaps2` | pass | pass | 1/2 | 2/2 |
 | `allcaps3` | pass | pass | - | - |
-| `allcaps_utf` | pass | pass | 1/3 | 1/3 |
+| `allcaps_utf` | pass | pass | 3/3 | 3/3 |
 | `arabic` | skip | pass | - | - |
-| `base` | pass | pass | 8/11 | 10/11 |
-| `base_utf` | fail | pass | 9/13 | 12/13 |
+| `base` | pass | pass | 9/11 | 10/11 |
+| `base_utf` | fail | pass | 10/13 | 12/13 |
 | `break` | pass | pass | - | - |
 | `breakdefault` | pass | pass | 5/5 | 5/5 |
 | `breakoff` | pass | pass | - | - |
@@ -97,7 +97,7 @@
 | `gh1095` | skip | skip | - | - |
 | `gh646` | skip | skip | - | - |
 | `hu` | fail | skip | - | - |
-| `i35725` | pass | pass | 0/10 | 2/10 |
+| `i35725` | pass | pass | 4/10 | 6/10 |
 | `i53643` | fail | pass | - | - |
 | `i54633` | fail | pass | 0/2 | 0/2 |
 | `i54980` | fail | skip | - | - |
@@ -144,9 +144,9 @@
 | `right_to_left_mark` | pass | skip | - | - |
 | `simplifiedtriple` | fail | pass | - | - |
 | `slash` | pass | skip | - | - |
-| `sug` | skip | pass | 9/13 | 10/13 |
+| `sug` | skip | pass | 9/13 | 11/13 |
 | `sug2` | skip | pass | 1/3 | 1/3 |
-| `sugutf` | skip | pass | 8/12 | 9/12 |
+| `sugutf` | skip | pass | 9/12 | 10/12 |
 | `timelimit` | pass | pass | 0/0 | 0/0 |
 | `utf8` | pass | skip | - | - |
 | `utf8_bom` | pass | skip | - | - |

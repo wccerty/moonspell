@@ -37,7 +37,7 @@ fn remove_suffix_strip(stem : String, strip : String) -> String? {
 fn generate_candidates(dictionary : Dictionary, config : AffixConfig) -> Array[String] {
   let candidates : Array[String] = []
   for entry in dictionary.entries {
-    if entry_is_forbidden(config, entry) || entry.word.contains(" ") {
+    if entry_is_forbidden(config, entry) || entry_is_nosuggest(config, entry) || entry.word.contains(" ") {
       continue
     }
     if !entry_needs_affix(config, entry) {
@@ -233,6 +233,55 @@ fn rep_candidates(word : String, config : AffixConfig) -> Array[String] {
 }
 
 ///|
+fn entry_is_nosuggest(config : AffixConfig, entry : DicEntry) -> Bool {
+  match config.no_suggest {
+    Some(flag) => flags_contain(config, entry.flags, flag)
+    None => false
+  }
+}
+
+///|
+fn key_candidates(word : String, config : AffixConfig) -> Array[String] {
+  let result : Array[String] = []
+  if config.keyboard.is_empty() {
+    return result
+  }
+  let groups = config.keyboard.split("|").to_array()
+  for i in 0..<word.length() {
+    let original = word.unsafe_get(i).to_int()
+    for group in groups {
+      let chars = group.to_array()
+      for j in 0..<chars.length() {
+        if chars[j].to_int() == original {
+          if j > 0 {
+            result.push(word.view(end_offset=i).to_owned()+chars[j-1].to_string()+word.view(start_offset=i+1).to_owned())
+          }
+          if j + 1 < chars.length() {
+            result.push(word.view(end_offset=i).to_owned()+chars[j+1].to_string()+word.view(start_offset=i+1).to_owned())
+          }
+        }
+      }
+    }
+  }
+  result
+}
+
+///|
+fn case_candidates(
+  dictionary : Dictionary,
+  config : AffixConfig,
+  word : String,
+) -> Array[String] {
+  let result : Array[String] = []
+  let lower_word = language_lower(config, word)
+  for candidate in generate_candidates(dictionary, config) {
+    if language_lower(config, candidate) == lower_word && candidate != word {
+      result.push(candidate)
+    }
+  }
+  result
+}
+///|
 fn map_candidates(word : String, config : AffixConfig) -> Array[String] {
   let result : Array[String] = []
   for mapping in config.maps {
@@ -318,6 +367,8 @@ pub fn suggest(
     return []
   }
   let result : Array[Suggestion] = []
+  add_rule_suggestions(result, dictionary, config, case_candidates(dictionary, config, word), limit)
+  add_rule_suggestions(result, dictionary, config, key_candidates(word, config), limit)
   add_rule_suggestions(result, dictionary, config, rep_candidates(word, config), limit)
   add_rule_suggestions(result, dictionary, config, map_candidates(word, config), limit)
   add_rule_suggestions(result, dictionary, config, try_candidates(word, config, limit * 200), limit)

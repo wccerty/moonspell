@@ -40,6 +40,7 @@ pub(all) struct AffixConfig {
   break_patterns : Array[String]
   flag_mode : String
   try_chars : String
+  keyboard : String
   word_chars : String
   flag_aliases : Array[String]
   morph_aliases : Array[String]
@@ -52,6 +53,7 @@ pub(all) struct AffixConfig {
   forbidden_word : String?
   keep_case : String?
   need_affix : String?
+  no_suggest : String?
   circumfix : String?
   complex_prefixes : Bool
   check_sharps : Bool
@@ -135,6 +137,7 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
   let break_patterns : Array[String] = ["-", "–"]
   let mut flag_mode = "char"
   let mut try_chars = ""
+  let mut keyboard = ""
   let mut word_chars = ""
   let flag_aliases : Array[String] = []
   let morph_aliases : Array[String] = []
@@ -147,6 +150,7 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
   let mut forbidden_word : String? = None
   let mut keep_case : String? = None
   let mut need_affix : String? = None
+  let mut no_suggest : String? = None
   let mut circumfix : String? = None
   let mut complex_prefixes = false
   let mut check_sharps = false
@@ -217,6 +221,12 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
         if tokens.length() >= 2 {
           flag_mode = tokens[1]
         }
+      }
+      "KEY" => {
+        if tokens.length() >= 2 { keyboard = tokens[1] }
+      }
+      "NOSUGGEST" => {
+        if tokens.length() >= 2 { no_suggest = Some(tokens[1]) }
       }
       "TRY" => {
         if tokens.length() >= 2 {
@@ -412,6 +422,7 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
     break_patterns,
     flag_mode,
     try_chars,
+    keyboard,
     word_chars,
     flag_aliases,
     morph_aliases,
@@ -424,6 +435,7 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
     forbidden_word,
     keep_case,
     need_affix,
+    no_suggest,
     circumfix,
     complex_prefixes,
     check_sharps,
