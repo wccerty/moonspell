@@ -19,4 +19,13 @@ MoonSpell currently does not claim full compatibility.
 | Edit-distance suggestions | Partial: generated dictionary/affix candidates and Levenshtein ranking |
 | Official fixture runner | Implemented; base good/wrong fixtures pass |
 
-The parser layer is under active development. Full Compatibility may only be declared after all supported Hunspell fixture behavior and suggestion output are verified against the pinned reference version.
+## Current baseline
+
+Full-suite baseline on 2026-09-20:
+
+- Good-word fixtures: `25/112`
+- Wrong-word fixtures: `78/95`
+- Suggestion Top-1: `75/173`
+- Suggestion exact-list matches: `62/173`
+
+The parser and engine are under active development. Full Compatibility may only be declared after all supported Hunspell fixture behavior and suggestion output are verified against the pinned reference version.

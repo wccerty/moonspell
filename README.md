@@ -50,7 +50,7 @@ moon run --target native cmd/main -- version
 - Unsupported directives must be reported explicitly, never ignored silently.
 - Suggestion compatibility is measured by candidate set and ordering.
 
-See [COMPATIBILITY.md](COMPATIBILITY.md) and [docs/PLAN.md](docs/PLAN.md).
+See [COMPATIBILITY.md](COMPATIBILITY.md), [the conformance baseline](docs/CONFORMANCE.md), and [docs/PLAN.md](docs/PLAN.md).
 
 ## License
 
