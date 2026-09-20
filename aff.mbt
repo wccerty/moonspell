@@ -32,6 +32,10 @@ pub(all) struct AffixConfig {
   suffixes : Array[AffixRule]
   replacements : Array[ReplacementRule]
   maps : Array[String]
+  forbidden_word : String?
+  keep_case : String?
+  need_affix : String?
+  circumfix : String?
   unsupported : Array[String]
 }
 
@@ -94,6 +98,10 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
   let suffixes : Array[AffixRule] = []
   let replacements : Array[ReplacementRule] = []
   let maps : Array[String] = []
+  let mut forbidden_word : String? = None
+  let mut keep_case : String? = None
+  let mut need_affix : String? = None
+  let mut circumfix : String? = None
   let unsupported : Array[String] = []
   let mut current_kind = AffixKind::Prefix
   let mut current_flag = ""
@@ -128,6 +136,26 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
       "WORDCHARS" => {
         if tokens.length() >= 2 {
           word_chars = tokens[1]
+        }
+      }
+      "FORBIDDENWORD" => {
+        if tokens.length() >= 2 {
+          forbidden_word = Some(tokens[1])
+        }
+      }
+      "KEEPCASE" => {
+        if tokens.length() >= 2 {
+          keep_case = Some(tokens[1])
+        }
+      }
+      "NEEDAFFIX" => {
+        if tokens.length() >= 2 {
+          need_affix = Some(tokens[1])
+        }
+      }
+      "CIRCUMFIX" => {
+        if tokens.length() >= 2 {
+          circumfix = Some(tokens[1])
         }
       }
       "AF" => {
@@ -208,6 +236,10 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
     suffixes,
     replacements,
     maps,
+    forbidden_word,
+    keep_case,
+    need_affix,
+    circumfix,
     unsupported,
   })
 }
