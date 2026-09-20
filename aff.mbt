@@ -33,6 +33,7 @@ pub(all) struct CompoundPattern {
 ///|
 pub(all) struct AffixConfig {
   encoding : String
+  language : String
   flag_mode : String
   try_chars : String
   word_chars : String
@@ -41,11 +42,15 @@ pub(all) struct AffixConfig {
   prefixes : Array[AffixRule]
   suffixes : Array[AffixRule]
   replacements : Array[ReplacementRule]
+  iconv_rules : Array[ReplacementRule]
+  oconv_rules : Array[ReplacementRule]
   maps : Array[String]
   forbidden_word : String?
   keep_case : String?
   need_affix : String?
   circumfix : String?
+  complex_prefixes : Bool
+  check_sharps : Bool
   compound_min : Int
   compound_word_max : Int
   compound_flag : String?
@@ -119,6 +124,7 @@ fn parse_affix_rule(
 pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
   let lines = strip_bom(text).split("\n").collect()
   let mut encoding = "ISO8859-1"
+  let mut language = ""
   let mut flag_mode = "char"
   let mut try_chars = ""
   let mut word_chars = ""
@@ -127,11 +133,15 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
   let prefixes : Array[AffixRule] = []
   let suffixes : Array[AffixRule] = []
   let replacements : Array[ReplacementRule] = []
+  let iconv_rules : Array[ReplacementRule] = []
+  let oconv_rules : Array[ReplacementRule] = []
   let maps : Array[String] = []
   let mut forbidden_word : String? = None
   let mut keep_case : String? = None
   let mut need_affix : String? = None
   let mut circumfix : String? = None
+  let mut complex_prefixes = false
+  let mut check_sharps = false
   let mut compound_min = 3
   let mut compound_word_max = 0
   let mut compound_flag : String? = None
@@ -163,6 +173,11 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
     }
     let directive = tokens[0]
     match directive {
+      "COMPLEXPREFIXES" => complex_prefixes = true
+      "CHECKSHARPS" => check_sharps = true
+      "LANG" => {
+        if tokens.length() >= 2 { language = tokens[1] }
+      }
       "SET" => {
         if tokens.length() >= 2 {
           encoding = tokens[1]
@@ -332,6 +347,16 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
           }
         }
       }
+      "ICONV" => {
+        if tokens.length() >= 3 {
+          iconv_rules.push({ from: tokens[1], to: tokens[2], })
+        }
+      }
+      "OCONV" => {
+        if tokens.length() >= 3 {
+          oconv_rules.push({ from: tokens[1], to: tokens[2], })
+        }
+      }
       "REP" => {
         if tokens.length() >= 3 {
           replacements.push({ from: tokens[1], to: tokens[2], })
@@ -350,6 +375,7 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
   }
   Ok({
     encoding,
+    language,
     flag_mode,
     try_chars,
     word_chars,
@@ -358,11 +384,15 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
     prefixes,
     suffixes,
     replacements,
+    iconv_rules,
+    oconv_rules,
     maps,
     forbidden_word,
     keep_case,
     need_affix,
     circumfix,
+    complex_prefixes,
+    check_sharps,
     compound_min,
     compound_word_max,
     compound_flag,

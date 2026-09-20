@@ -294,3 +294,46 @@ test "dictionary word pairs block concatenated compounds" {
   assert_true(@moonspell.spell(dictionary, config, "compound").accepted)
   assert_false(@moonspell.spell(dictionary, config, "compoundword").accepted)
 }
+test "AF flag aliases expand dictionary and continuation flags" {
+  let dictionary = @moonspell.parse_dic("1\nfoo/1\n").unwrap()
+  let config = @moonspell.parse_aff("AF 2\nAF AB\nAF A\nSFX A Y 1\nSFX A 0 x .\nSFX B Y 1\nSFX B 0 y/2 .\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "foo").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "foox").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "fooy").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "fooyx").accepted)
+}
+test "COMPLEXPREFIXES restores twofold prefixes in order" {
+  let dictionary = @moonspell.parse_dic("1\nouro/B\n").unwrap()
+  let config = @moonspell.parse_aff("COMPLEXPREFIXES\nPFX A Y 1\nPFX A 0 tek .\nPFX B Y 1\nPFX B 0 met/A .\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "ouro").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "metouro").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "tekmetouro").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "tekouro").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "mettekouro").accepted)
+}
+test "CIRCUMFIX requires a matching prefix and suffix" {
+  let dictionary = @moonspell.parse_dic("1\nnagy/C\n").unwrap()
+  let config = @moonspell.parse_aff("CIRCUMFIX X\nPFX A Y 1\nPFX A 0 leg/X .\nPFX B Y 1\nPFX B 0 legesleg/X .\nSFX C Y 3\nSFX C 0 obb .\nSFX C 0 obb/AX .\nSFX C 0 obb/BX .\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "nagy").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "nagyobb").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "legnagyobb").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "legeslegnagyobb").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "legnagy").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "legeslegnagy").accepted)
+}
+test "ICONV normalizes input before lookup" {
+  let dictionary = @moonspell.parse_dic("2\nChișinău\nț\n").unwrap()
+  let config = @moonspell.parse_aff("ICONV 2\nICONV ş ș\nICONV ţ ț\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "Chişinău").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "ţ").accepted)
+}
+test "CHECKSHARPS handles ß and SS capitalization" {
+  let dictionary = @moonspell.parse_dic("3\nmüßig/k\nAusstoß\nAußenabmessung\n").unwrap()
+  let config = @moonspell.parse_aff("SET UTF-8\nCHECKSHARPS\nKEEPCASE k\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "müßig").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "Müßig").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "MÜSSIG").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "AUSSTOSS").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "AUSSENABMESSUNG").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "MÜßIG").accepted)
+}

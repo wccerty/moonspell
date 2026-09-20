@@ -4,11 +4,11 @@
 
 - Hunspell reference: `hunspell-1.7.3`
 - Fixtures scanned: `144`
-- Good-word fixtures passed: `61/112`
+- Good-word fixtures passed: `77/112`
 - Wrong-word fixtures passed: `79/95`
 - Suggestion fixtures: `37`
 - Suggestion top-1 hits: `76/173`
-- Suggestion exact-list matches: `62/173`
+- Suggestion exact-list matches: `63/173`
 
 | Fixture | Good | Wrong | Suggest exact | Suggest top-1 |
 |---|---:|---:|---:|---:|
@@ -26,13 +26,13 @@
 | `2970242` | pass | pass | - | - |
 | `2999225` | pass | skip | - | - |
 | `affixes` | pass | skip | - | - |
-| `alias` | fail | skip | - | - |
-| `alias2` | fail | skip | - | - |
-| `alias3` | fail | skip | - | - |
-| `allcaps` | fail | pass | 1/3 | 1/3 |
-| `allcaps2` | fail | fail | 1/2 | 1/2 |
+| `alias` | pass | skip | - | - |
+| `alias2` | pass | skip | - | - |
+| `alias3` | pass | skip | - | - |
+| `allcaps` | pass | pass | 1/3 | 1/3 |
+| `allcaps2` | pass | pass | 1/2 | 2/2 |
 | `allcaps3` | pass | pass | - | - |
-| `allcaps_utf` | fail | pass | 1/3 | 1/3 |
+| `allcaps_utf` | pass | pass | 1/3 | 1/3 |
 | `arabic` | skip | pass | - | - |
 | `base` | pass | pass | 8/11 | 10/11 |
 | `base_utf` | fail | pass | 9/13 | 12/13 |
@@ -51,12 +51,12 @@
 | `checkcompoundrep2` | pass | skip | - | - |
 | `checkcompoundtriple` | pass | pass | - | - |
 | `checksharps` | fail | pass | 0/1 | 0/1 |
-| `checksharpsutf` | fail | pass | 0/1 | 0/1 |
-| `circumfix` | fail | pass | - | - |
+| `checksharpsutf` | pass | pass | 0/1 | 0/1 |
+| `circumfix` | pass | pass | - | - |
 | `colons_in_words` | skip | skip | - | - |
-| `complexprefixes` | fail | pass | - | - |
-| `complexprefixes2` | fail | skip | - | - |
-| `complexprefixesutf` | fail | pass | - | - |
+| `complexprefixes` | pass | pass | - | - |
+| `complexprefixes2` | pass | skip | - | - |
+| `complexprefixesutf` | pass | pass | - | - |
 | `compound_wnum_overflow` | skip | skip | - | - |
 | `compoundaffix` | pass | pass | - | - |
 | `compoundaffix2` | pass | skip | - | - |
@@ -75,17 +75,17 @@
 | `condition_utf` | pass | pass | - | - |
 | `conditionalprefix` | fail | pass | - | - |
 | `digits_in_words` | skip | fail | - | - |
-| `dotless_i` | fail | fail | - | - |
+| `dotless_i` | pass | pass | - | - |
 | `encoding` | fail | skip | - | - |
 | `flag` | fail | skip | - | - |
 | `flaglong` | fail | skip | - | - |
 | `flagnum` | fail | skip | - | - |
 | `flagutf8` | fail | skip | - | - |
 | `fogemorpheme` | pass | pass | - | - |
-| `forbiddenword` | pass | pass | - | - |
+| `forbiddenword` | fail | pass | - | - |
 | `forceucase` | pass | fail | 0/2 | 0/2 |
 | `fullstrip` | pass | skip | - | - |
-| `germancompounding` | fail | pass | - | - |
+| `germancompounding` | fail | fail | - | - |
 | `germancompoundingold` | fail | fail | - | - |
 | `gh1002` | skip | pass | 0/0 | 0/0 |
 | `gh1018` | skip | skip | - | - |
@@ -104,14 +104,14 @@
 | `i58202` | pass | pass | 2/13 | 3/13 |
 | `i68568` | skip | pass | - | - |
 | `i68568utf` | skip | pass | - | - |
-| `iconv` | fail | skip | - | - |
-| `iconv2` | fail | skip | - | - |
+| `iconv` | pass | skip | - | - |
+| `iconv2` | pass | skip | - | - |
 | `iconv_break_overflow` | skip | pass | - | - |
 | `ignore` | fail | skip | - | - |
 | `ignoresug` | fail | skip | - | - |
 | `ignoreutf` | fail | skip | - | - |
 | `IJ` | pass | pass | 0/1 | 1/1 |
-| `keepcase` | pass | pass | 6/8 | 8/8 |
+| `keepcase` | pass | fail | 4/8 | 4/8 |
 | `korean` | pass | pass | - | - |
 | `limit-multiple-compounding` | pass | fail | - | - |
 | `map` | skip | pass | 0/3 | 0/3 |
@@ -125,8 +125,8 @@
 | `nepali` | fail | skip | - | - |
 | `ngram_utf_fix` | pass | pass | 0/1 | 0/1 |
 | `nosuggest` | pass | pass | 0/0 | 0/0 |
-| `oconv` | pass | pass | 0/3 | 0/3 |
-| `oconv2` | fail | skip | - | - |
+| `oconv` | pass | pass | 3/3 | 3/3 |
+| `oconv2` | pass | skip | - | - |
 | `ofz51432` | skip | skip | - | - |
 | `ofz5627151457255424` | skip | skip | - | - |
 | `onlyincompound` | pass | pass | 0/0 | 0/0 |
@@ -149,8 +149,8 @@
 | `sugutf` | skip | pass | 8/12 | 9/12 |
 | `timelimit` | pass | pass | 0/0 | 0/0 |
 | `utf8` | pass | skip | - | - |
-| `utf8_bom` | fail | skip | - | - |
-| `utf8_bom2` | fail | skip | - | - |
+| `utf8_bom` | pass | skip | - | - |
+| `utf8_bom2` | pass | skip | - | - |
 | `utf8_nonbmp` | fail | fail | 0/2 | 0/2 |
 | `utfcompound` | pass | pass | - | - |
 | `warn` | pass | skip | - | - |

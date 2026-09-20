@@ -44,7 +44,7 @@ fn generate_candidates(dictionary : Dictionary, config : AffixConfig) -> Array[S
       remember_unique(candidates, entry.word)
     }
     for prefix in config.prefixes {
-      if flags_contain(config.flag_mode, entry.flags, prefix.flag) {
+      if flags_contain(config, entry.flags, prefix.flag) {
         match remove_prefix_strip(entry.word, prefix.strip) {
           Some(base) =>
             if condition_matches(prefix, entry.word) {
@@ -55,7 +55,7 @@ fn generate_candidates(dictionary : Dictionary, config : AffixConfig) -> Array[S
       }
     }
     for suffix in config.suffixes {
-      if flags_contain(config.flag_mode, entry.flags, suffix.flag) {
+      if flags_contain(config, entry.flags, suffix.flag) {
         match remove_suffix_strip(entry.word, suffix.strip) {
           Some(base) =>
             if condition_matches(suffix, entry.word) {
@@ -68,8 +68,8 @@ fn generate_candidates(dictionary : Dictionary, config : AffixConfig) -> Array[S
     for prefix in config.prefixes {
       for suffix in config.suffixes {
         if prefix.cross_product && suffix.cross_product &&
-          flags_contain(config.flag_mode, entry.flags, prefix.flag) &&
-          flags_contain(config.flag_mode, entry.flags, suffix.flag) &&
+          flags_contain(config, entry.flags, prefix.flag) &&
+          flags_contain(config, entry.flags, suffix.flag) &&
           condition_matches(prefix, entry.word) && condition_matches(suffix, entry.word) {
           match remove_prefix_strip(entry.word, prefix.strip) {
             Some(without_prefix) =>
@@ -209,10 +209,11 @@ fn add_rule_suggestions(
     if result.length() >= limit {
       return
     }
-    if !result.any(item => item.word == candidate) &&
+    let output = apply_conversions(config.oconv_rules, candidate)
+    if !result.any(item => item.word == output) &&
       suggestion_word_is_valid(dictionary, config, candidate) {
       result.push({
-        word: candidate,
+        word: output,
         distance: levenshtein_distance(candidate, candidate),
       })
     }
@@ -321,12 +322,13 @@ pub fn suggest(
   add_rule_suggestions(result, dictionary, config, try_candidates(word, config, limit * 200), limit)
   let candidates = generate_candidates(dictionary, config)
   for candidate in candidates {
-    if result.any(item => item.word == candidate) {
+    let output = apply_conversions(config.oconv_rules, candidate)
+    if result.any(item => item.word == output) {
       continue
     }
     let distance = levenshtein_distance(word, candidate)
     if distance <= 3 {
-      insert_ranked(result, { word: candidate, distance, }, limit)
+      insert_ranked(result, { word: output, distance, }, limit)
     }
   }
   result
