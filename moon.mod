@@ -24,3 +24,7 @@ keywords = ["hunspell", "spellchecker", "nlp", "moonbit"]
 preferred_target = "wasm"
 
 description = "A pure-MoonBit Hunspell-compatible spelling engine"
+
+import {
+  "moonbitlang/x@0.5.5",
+}
