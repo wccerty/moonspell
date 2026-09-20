@@ -6,7 +6,7 @@ Its goal is to parse Hunspell `.aff` and `.dic` dictionaries, perform affix and 
 
 ## Status
 
-Early project scaffold. The compatibility target is **Hunspell v1.7.3**, but full compatibility is not claimed until the complete upstream conformance suite passes.
+Current milestone: core .aff/.dic parsing, exact lookup, PFX/SFX checking, cross product, and basic ranked suggestions. The compatibility target is **Hunspell v1.7.3**, but full compatibility is not claimed until the complete upstream conformance suite passes.
 
 ## Planned API
 
