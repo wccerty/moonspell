@@ -37,6 +37,18 @@ pub(all) struct AffixConfig {
   keep_case : String?
   need_affix : String?
   circumfix : String?
+  compound_min : Int
+  compound_word_max : Int
+  compound_flag : String?
+  compound_begin : String?
+  compound_middle : String?
+  compound_end : String?
+  compound_permit : String?
+  compound_forbid : String?
+  only_in_compound : String?
+  check_compound_dup : Bool
+  check_compound_case : Bool
+  check_compound_triple : Bool
   unsupported : Array[String]
 }
 
@@ -108,6 +120,18 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
   let mut keep_case : String? = None
   let mut need_affix : String? = None
   let mut circumfix : String? = None
+  let mut compound_min = 3
+  let mut compound_word_max = 0
+  let mut compound_flag : String? = None
+  let mut compound_begin : String? = None
+  let mut compound_middle : String? = None
+  let mut compound_end : String? = None
+  let mut compound_permit : String? = None
+  let mut compound_forbid : String? = None
+  let mut only_in_compound : String? = None
+  let mut check_compound_dup = false
+  let mut check_compound_case = false
+  let mut check_compound_triple = false
   let unsupported : Array[String] = []
   let mut current_kind = AffixKind::Prefix
   let mut current_flag = ""
@@ -164,6 +188,46 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
           circumfix = Some(tokens[1])
         }
       }
+      "COMPOUNDMIN" => {
+        if tokens.length() >= 2 {
+          match parse_decimal_count(tokens[1]) {
+            Some(value) => compound_min = value
+            None => ()
+          }
+        }
+      }
+      "COMPOUNDWORDMAX" => {
+        if tokens.length() >= 2 {
+          match parse_decimal_count(tokens[1]) {
+            Some(value) => compound_word_max = value
+            None => ()
+          }
+        }
+      }
+      "COMPOUNDFLAG" => {
+        if tokens.length() >= 2 { compound_flag = Some(tokens[1]) }
+      }
+      "COMPOUNDBEGIN" => {
+        if tokens.length() >= 2 { compound_begin = Some(tokens[1]) }
+      }
+      "COMPOUNDMIDDLE" => {
+        if tokens.length() >= 2 { compound_middle = Some(tokens[1]) }
+      }
+      "COMPOUNDEND" => {
+        if tokens.length() >= 2 { compound_end = Some(tokens[1]) }
+      }
+      "COMPOUNDPERMITFLAG" => {
+        if tokens.length() >= 2 { compound_permit = Some(tokens[1]) }
+      }
+      "COMPOUNDFORBIDFLAG" => {
+        if tokens.length() >= 2 { compound_forbid = Some(tokens[1]) }
+      }
+      "ONLYINCOMPOUND" => {
+        if tokens.length() >= 2 { only_in_compound = Some(tokens[1]) }
+      }
+      "CHECKCOMPOUNDDUP" => check_compound_dup = true
+      "CHECKCOMPOUNDCASE" => check_compound_case = true
+      "CHECKCOMPOUNDTRIPLE" => check_compound_triple = true
       "AF" => {
         if tokens.length() >= 2 {
           match parse_decimal_count(tokens[1]) {
@@ -246,6 +310,18 @@ pub fn parse_aff(text : String) -> Result[AffixConfig, AffixParseError] {
     keep_case,
     need_affix,
     circumfix,
+    compound_min,
+    compound_word_max,
+    compound_flag,
+    compound_begin,
+    compound_middle,
+    compound_end,
+    compound_permit,
+    compound_forbid,
+    only_in_compound,
+    check_compound_dup,
+    check_compound_case,
+    check_compound_triple,
     unsupported,
   })
 }

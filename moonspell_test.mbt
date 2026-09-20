@@ -132,3 +132,108 @@ test "capitalization and trailing periods follow Hunspell basics" {
   assert_true(@moonspell.spell(dictionary, config, "HUNSPELL.").accepted)
   assert_false(@moonspell.spell(dictionary, config, "Nasa").accepted)
 }
+
+test "compound flag and minimum length" {
+  let dictionary = @moonspell.parse_dic("4\nfoo/A\nbar/A\nxy/A\nyz/A\n").unwrap()
+  let config = @moonspell.parse_aff("COMPOUNDMIN 3\nCOMPOUNDFLAG A\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "foobar").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "barfoo").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "foobarfoo").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "xyyz").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "fooxy").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "xyfoo").accepted)
+}
+
+test "compound affixes stay in permitted positions" {
+  let dictionary = @moonspell.parse_dic("2\nfoo/XPS\nbar/XPS\n").unwrap()
+  let config = @moonspell.parse_aff("COMPOUNDFLAG X\nPFX P Y 1\nPFX P 0 pre .\nSFX S Y 1\nSFX S 0 suf .\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "prefoo").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "foosuf").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "prefoobarsuf").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "foosufbar").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "fooprebarsuf").accepted)
+}
+
+test "ONLYINCOMPOUND words cannot stand alone" {
+  let dictionary = @moonspell.parse_dic("2\nfoo/A\npseudo/OAB\n").unwrap()
+  let config = @moonspell.parse_aff("ONLYINCOMPOUND O\nCOMPOUNDFLAG A\nSFX B Y 1\nSFX B 0 s .\n").unwrap()
+  assert_false(@moonspell.spell(dictionary, config, "pseudo").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "pseudos").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "pseudofoo").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "foopseudo").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "foopseudos").accepted)
+}
+test "CHECKCOMPOUNDDUP only rejects a duplicated final component" {
+  let dictionary = @moonspell.parse_dic("2\nfoo/A\nbar/A\n").unwrap()
+  let config = @moonspell.parse_aff("CHECKCOMPOUNDDUP\nCOMPOUNDFLAG A\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "foofoobar").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "foofoo").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "foobarbar").accepted)
+}
+
+test "CHECKCOMPOUNDCASE rejects uppercase at compound boundaries" {
+  let dictionary = @moonspell.parse_dic("4\nfoo/A\nBar/A\nBAZ/A\n-/A\n").unwrap()
+  let config = @moonspell.parse_aff("CHECKCOMPOUNDCASE\nCOMPOUNDFLAG A\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "Barfoo").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "foo-Bar").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "fooBar").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "BAZBar").accepted)
+}
+
+test "CHECKCOMPOUNDTRIPLE rejects triple letters at boundaries" {
+  let dictionary = @moonspell.parse_dic("4\nfoo/A\nopera/A\neel/A\nbare/A\n").unwrap()
+  let config = @moonspell.parse_aff("CHECKCOMPOUNDTRIPLE\nCOMPOUNDFLAG A\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "operafoo").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "fooopera").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "bareeel").accepted)
+}
+
+test "COMPOUNDPERMITFLAG allows affixes inside compounds" {
+  let dictionary = @moonspell.parse_dic("2\nfoo/XPS\nbar/XPS\n").unwrap()
+  let config = @moonspell.parse_aff("COMPOUNDFLAG X\nCOMPOUNDPERMITFLAG Y\nPFX P Y 1\nPFX P 0 pre/Y .\nSFX S Y 1\nSFX S 0 suf/Y .\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "foosufbar").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "fooprebarsuf").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "prefooprebarsuf").accepted)
+}
+
+test "COMPOUNDFORBIDFLAG removes affixed forms from compounds" {
+  let dictionary = @moonspell.parse_dic("2\nfoo/XPS\nbar/XPS\n").unwrap()
+  let config = @moonspell.parse_aff("COMPOUNDFLAG X\nCOMPOUNDFORBIDFLAG Z\nPFX P Y 1\nPFX P 0 pre/Z .\nSFX S Y 1\nSFX S 0 suf/Z .\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "prefoo").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "foosuf").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "prefoobarsuf").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "foosufbar").accepted)
+}
+
+test "KEEPCASE blocks case-folded variants" {
+  let dictionary = @moonspell.parse_dic("3\ncafé/K\nfoo/K\nbar\n").unwrap()
+  let config = @moonspell.parse_aff("KEEPCASE K\n").unwrap()
+  assert_true(@moonspell.spell(dictionary, config, "café").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "Café").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "foo").accepted)
+  assert_false(@moonspell.spell(dictionary, config, "Foo").accepted)
+  assert_true(@moonspell.spell(dictionary, config, "Bar").accepted)
+}
+test "REP suggestions take priority and support spaces" {
+  let dictionary = @moonspell.parse_dic("2\na\nlot\n").unwrap()
+  let config = @moonspell.parse_aff("REP 1\nREP alot a_lot\n").unwrap()
+  let suggestions = @moonspell.suggest(dictionary, config, "alot", 3)
+  assert_true(suggestions.length() > 0)
+  assert_eq(suggestions[0].word, "a lot")
+}
+
+test "MAP suggestions restore mapped characters" {
+  let dictionary = @moonspell.parse_dic("1\ncafé\n").unwrap()
+  let config = @moonspell.parse_aff("MAP 1\nMAP eé\n").unwrap()
+  let suggestions = @moonspell.suggest(dictionary, config, "cafe", 3)
+  assert_true(suggestions.length() > 0)
+  assert_eq(suggestions[0].word, "café")
+}
+
+test "TRY suggestions generate one-edit candidates" {
+  let dictionary = @moonspell.parse_dic("1\nform\n").unwrap()
+  let config = @moonspell.parse_aff("TRY r\n").unwrap()
+  let suggestions = @moonspell.suggest(dictionary, config, "fom", 3)
+  assert_true(suggestions.length() > 0)
+  assert_eq(suggestions[0].word, "form")
+}

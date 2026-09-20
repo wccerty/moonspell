@@ -135,6 +135,177 @@ fn insert_ranked(result : Array[Suggestion], candidate : Suggestion, limit : Int
 }
 
 ///|
+fn suggestion_word_is_valid(
+  dictionary : Dictionary,
+  config : AffixConfig,
+  word : String,
+) -> Bool {
+  if word.contains(" ") {
+    for part in word.split(" ") {
+      let token = part.to_owned()
+      if token.is_empty() || !spell(dictionary, config, token).accepted {
+        return false
+      }
+    }
+    true
+  } else {
+    spell(dictionary, config, word).accepted
+  }
+}
+
+///|
+fn replace_first(text : String, from : String, to : String) -> String? {
+  match text.find(from) {
+    Some(index) =>
+      Some(
+        text.view(end_offset=index).to_owned() +
+        to +
+        text.view(start_offset=index + from.length()).to_owned(),
+      )
+    None => None
+  }
+}
+
+///|
+fn replacement_candidate(
+  word : String,
+  from_raw : String,
+  to_raw : String,
+) -> String? {
+  let from = if from_raw.find("^") == Some(0) {
+    from_raw.view(start_offset=1).to_owned()
+  } else {
+    from_raw
+  }
+  let anchored_end = from.find("$") == Some(from.length() - 1)
+  let from = if anchored_end {
+    from.view(end_offset=from.length() - 1).to_owned()
+  } else {
+    from
+  }
+  let anchored_start = from_raw.find("^") == Some(0)
+  if anchored_start && word.find(from) != Some(0) {
+    return None
+  }
+  if anchored_end && !ends_with(word.view(), from) {
+    return None
+  }
+  let to = to_raw.replace_all(old="_", new=" ")
+  match replace_first(word, from, to) {
+    Some(candidate) => if candidate == word { None } else { Some(candidate) }
+    None => None
+  }
+}
+
+///|
+fn add_rule_suggestions(
+  result : Array[Suggestion],
+  dictionary : Dictionary,
+  config : AffixConfig,
+  candidates : Array[String],
+  limit : Int,
+) -> Unit {
+  for candidate in candidates {
+    if result.length() >= limit {
+      return
+    }
+    if !result.any(item => item.word == candidate) &&
+      suggestion_word_is_valid(dictionary, config, candidate) {
+      result.push({
+        word: candidate,
+        distance: levenshtein_distance(candidate, candidate),
+      })
+    }
+  }
+}
+
+///|
+fn rep_candidates(word : String, config : AffixConfig) -> Array[String] {
+  let result : Array[String] = []
+  for rule in config.replacements {
+    match replacement_candidate(word, rule.from, rule.to) {
+      Some(candidate) => result.push(candidate)
+      None => ()
+    }
+  }
+  result
+}
+
+///|
+fn map_candidates(word : String, config : AffixConfig) -> Array[String] {
+  let result : Array[String] = []
+  for mapping in config.maps {
+    let chars = mapping.to_array()
+    for i in 0..<chars.length() {
+      let from = chars[i].to_string()
+      for j in 0..<chars.length() {
+        if i != j {
+          let to = chars[j].to_string()
+          match replace_first(word, from, to) {
+            Some(candidate) => result.push(candidate)
+            None => ()
+          }
+        }
+      }
+    }
+  }
+  result
+}
+
+///|
+fn try_candidates(word : String, config : AffixConfig, limit : Int) -> Array[String] {
+  let result : Array[String] = []
+  if config.try_chars.is_empty() {
+    return result
+  }
+  let chars = word.to_array()
+  for c in config.try_chars {
+    for i in 0..<=chars.length() {
+      if result.length() >= limit {
+        return result
+      }
+      result.push(
+        word.view(end_offset=i).to_owned() +
+        c.to_string() +
+        word.view(start_offset=i).to_owned(),
+      )
+    }
+  }
+  for i in 0..<chars.length() {
+    for c in config.try_chars {
+      if result.length() >= limit {
+        return result
+      }
+      result.push(
+        word.view(end_offset=i).to_owned() +
+        c.to_string() +
+        word.view(start_offset=i + 1).to_owned(),
+      )
+    }
+  }
+  for i in 0..<chars.length() {
+    if result.length() >= limit {
+      return result
+    }
+    result.push(
+      word.view(end_offset=i).to_owned() +
+      word.view(start_offset=i + 1).to_owned(),
+    )
+  }
+  for i in 0..<(chars.length() - 1) {
+    if result.length() >= limit {
+      return result
+    }
+    result.push(
+      word.view(end_offset=i).to_owned() +
+      chars[i + 1].to_string() +
+      chars[i].to_string() +
+      word.view(start_offset=i + 2).to_owned(),
+    )
+  }
+  result
+}
+///|
 pub fn suggest(
   dictionary : Dictionary,
   config : AffixConfig,
@@ -144,9 +315,15 @@ pub fn suggest(
   if limit <= 0 || spell(dictionary, config, word).accepted {
     return []
   }
-  let candidates = generate_candidates(dictionary, config)
   let result : Array[Suggestion] = []
+  add_rule_suggestions(result, dictionary, config, rep_candidates(word, config), limit)
+  add_rule_suggestions(result, dictionary, config, map_candidates(word, config), limit)
+  add_rule_suggestions(result, dictionary, config, try_candidates(word, config, limit * 200), limit)
+  let candidates = generate_candidates(dictionary, config)
   for candidate in candidates {
+    if result.any(item => item.word == candidate) {
+      continue
+    }
     let distance = levenshtein_distance(word, candidate)
     if distance <= 3 {
       insert_ranked(result, { word: candidate, distance, }, limit)
