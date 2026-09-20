@@ -4,11 +4,11 @@
 
 - Hunspell reference: `hunspell-1.7.3`
 - Fixtures scanned: `144`
-- Good-word fixtures passed: `51/112`
-- Wrong-word fixtures passed: `73/95`
+- Good-word fixtures passed: `61/112`
+- Wrong-word fixtures passed: `79/95`
 - Suggestion fixtures: `37`
-- Suggestion top-1 hits: `84/173`
-- Suggestion exact-list matches: `68/173`
+- Suggestion top-1 hits: `76/173`
+- Suggestion exact-list matches: `62/173`
 
 | Fixture | Good | Wrong | Suggest exact | Suggest top-1 |
 |---|---:|---:|---:|---:|
@@ -22,9 +22,9 @@
 | `1748408-3` | pass | skip | - | - |
 | `1748408-4` | pass | skip | - | - |
 | `1975530` | pass | pass | - | - |
-| `2970240` | pass | fail | - | - |
-| `2970242` | pass | fail | - | - |
-| `2999225` | fail | skip | - | - |
+| `2970240` | pass | pass | - | - |
+| `2970242` | pass | pass | - | - |
+| `2999225` | pass | skip | - | - |
 | `affixes` | pass | skip | - | - |
 | `alias` | fail | skip | - | - |
 | `alias2` | fail | skip | - | - |
@@ -63,18 +63,18 @@
 | `compoundaffix3` | pass | pass | - | - |
 | `compoundflag` | pass | pass | - | - |
 | `compoundforbid` | pass | pass | - | - |
-| `compoundrule` | fail | pass | - | - |
-| `compoundrule2` | fail | pass | - | - |
-| `compoundrule3` | fail | pass | - | - |
-| `compoundrule4` | fail | pass | - | - |
-| `compoundrule5` | fail | pass | - | - |
-| `compoundrule6` | fail | pass | - | - |
-| `compoundrule7` | fail | pass | - | - |
-| `compoundrule8` | fail | pass | - | - |
+| `compoundrule` | pass | pass | - | - |
+| `compoundrule2` | pass | pass | - | - |
+| `compoundrule3` | pass | pass | - | - |
+| `compoundrule4` | pass | pass | - | - |
+| `compoundrule5` | pass | pass | - | - |
+| `compoundrule6` | pass | pass | - | - |
+| `compoundrule7` | pass | pass | - | - |
+| `compoundrule8` | pass | pass | - | - |
 | `condition` | fail | pass | - | - |
 | `condition_utf` | pass | pass | - | - |
 | `conditionalprefix` | fail | pass | - | - |
-| `digits_in_words` | skip | pass | - | - |
+| `digits_in_words` | skip | fail | - | - |
 | `dotless_i` | fail | fail | - | - |
 | `encoding` | fail | skip | - | - |
 | `flag` | fail | skip | - | - |
@@ -82,7 +82,7 @@
 | `flagnum` | fail | skip | - | - |
 | `flagutf8` | fail | skip | - | - |
 | `fogemorpheme` | pass | pass | - | - |
-| `forbiddenword` | pass | fail | - | - |
+| `forbiddenword` | pass | pass | - | - |
 | `forceucase` | pass | fail | 0/2 | 0/2 |
 | `fullstrip` | pass | skip | - | - |
 | `germancompounding` | fail | pass | - | - |
@@ -110,7 +110,7 @@
 | `ignore` | fail | skip | - | - |
 | `ignoresug` | fail | skip | - | - |
 | `ignoreutf` | fail | skip | - | - |
-| `IJ` | pass | fail | 0/1 | 0/1 |
+| `IJ` | pass | pass | 0/1 | 1/1 |
 | `keepcase` | pass | pass | 6/8 | 8/8 |
 | `korean` | pass | pass | - | - |
 | `limit-multiple-compounding` | pass | fail | - | - |
@@ -119,7 +119,7 @@
 | `morph` | fail | skip | - | - |
 | `needaffix` | pass | pass | - | - |
 | `needaffix2` | pass | skip | - | - |
-| `needaffix3` | pass | fail | - | - |
+| `needaffix3` | pass | pass | - | - |
 | `needaffix4` | pass | skip | - | - |
 | `needaffix5` | fail | fail | - | - |
 | `nepali` | fail | skip | - | - |
@@ -131,13 +131,13 @@
 | `ofz5627151457255424` | skip | skip | - | - |
 | `onlyincompound` | pass | pass | 0/0 | 0/0 |
 | `onlyincompound2` | pass | fail | - | - |
-| `opentaal_cpdpat` | pass | fail | - | - |
+| `opentaal_cpdpat` | pass | pass | - | - |
 | `opentaal_cpdpat2` | fail | pass | - | - |
-| `opentaal_forbiddenword1` | fail | pass | 0/1 | 0/1 |
+| `opentaal_forbiddenword1` | pass | fail | 0/1 | 0/1 |
 | `opentaal_forbiddenword2` | pass | fail | 0/1 | 0/1 |
 | `opentaal_keepcase` | pass | fail | 0/8 | 0/8 |
-| `ph` | skip | pass | 5/11 | 7/11 |
-| `ph2` | skip | fail | 1/14 | 2/14 |
+| `ph` | skip | pass | 0/11 | 0/11 |
+| `ph2` | skip | pass | 0/14 | 0/14 |
 | `phone` | skip | pass | 0/1 | 1/1 |
 | `rep` | skip | pass | 3/8 | 3/8 |
 | `reputf` | skip | pass | 1/1 | 1/1 |
@@ -154,5 +154,5 @@
 | `utf8_nonbmp` | fail | fail | 0/2 | 0/2 |
 | `utfcompound` | pass | pass | - | - |
 | `warn` | pass | skip | - | - |
-| `wordpair` | skip | fail | - | - |
+| `wordpair` | skip | pass | - | - |
 | `zeroaffix` | pass | skip | - | - |
